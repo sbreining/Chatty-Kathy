@@ -21,35 +21,49 @@ class DBCon:
         n = name.lower()  # Make sure the name passed in is all lowercase.
         try:
             with self.db:
-                self.db.execute("insert into viewers(name, points) values (?, ?)", (n, 0,))
+                self.db.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 0,))
         except sqlite3.IntegrityError:
-            print("Don't insert a viewer twice")
+            pass
 
     def update_points(self, name, amount):
-        self.db.execute("update viewers set points=? where name=?", (amount, name,))
+        self.db.execute("UPDATE viewers SET points=? WHERE name=?", (amount, name,))
         self.db.commit()
 
     def get_points(self, name):
-        p = self.cur.execute("select points from viewers where name=?", (name,)).fetchone()[0]
+        p = self.cur.execute("SELECT points FROM viewers WHERE name=?", (name,)).fetchone()[0]
         return p
 
     def add_points(self, name, amount):
         p = self.get_points(name)
-        p += amount
+        p += int(amount)
         self.update_points(name, p)
 
     def subtract_points(self, name, amount):
         p = self.get_points(name)
-        if amount > p:
+        v = int(amount)
+        if v > p:
             p = 0
         else:
-            p -= amount
+            p -= v
         self.update_points(name, p)
 
     def transfer_points(self, donator, receiver, amount):
         p = self.get_points(donator)
-        if amount > p:
-            print("Send message to chat saying donator cannot donate that amount")
+        try:
+            v = int(amount)
+        except ValueError:
+            return "Donations must be whole numbers"
+
+        if v > p:
+            return donator + ", you cannot donate that much."
+        elif v < 0:
+            return donator + ", don't try to steal, you bastard."
         else:
-            self.subtract_points(donator, amount)
-            self.add_points(receiver, amount)
+            self.cur.execute("SELECT count(*) FROM viewers WHERE name=?", (receiver,))
+            data = self.cur.fetchone()[0]
+            if data == 0:
+                return "There is no viewer named " + receiver + " to give points to."
+            else:
+                self.subtract_points(donator, v)
+                self.add_points(receiver, v)
+        return donator + " gave " + str(v) + " kernels to " + receiver
