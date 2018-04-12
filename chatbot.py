@@ -35,7 +35,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, 'oauth:' + token)], username, username)
 
         self.bucket = databasecon.DBCon()
-        self.vmgr = viewermngr.Vmanager(channel)
+        self.vmgr = viewermngr.Vmanager(self.bucket, channel)
         self.vmgr.start()
 
     def on_welcome(self, c, e):

@@ -13,7 +13,7 @@ class DBCon:
         d = os.path.dirname(__file__)
         docs_path = os.path.join(d, '../docs/')
 
-        self.db = sqlite3.connect(docs_path + "kettlebase.db")
+        self.db = sqlite3.connect(docs_path + "kettlebase.db", check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.cur = self.db.cursor()
 
@@ -23,8 +23,8 @@ class DBCon:
             with self.db:
                 self.db.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 0,))
         except sqlite3.IntegrityError:
-            return -1
-        return 1
+            return False
+        return True
 
     def update_points(self, name, amount):
         self.db.execute("UPDATE viewers SET points=? WHERE name=?", (amount, name,))
