@@ -23,7 +23,8 @@ class DBCon:
             with self.db:
                 self.db.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 0,))
         except sqlite3.IntegrityError:
-            pass
+            return -1
+        return 1
 
     def update_points(self, name, amount):
         self.db.execute("UPDATE viewers SET points=? WHERE name=?", (amount, name,))

@@ -1,8 +1,11 @@
 '''
 Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the
+License. A copy of the License is located at
     http://aws.amazon.com/apache2.0/
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
+limitations under the License.
 '''
 
 import sys
@@ -10,6 +13,7 @@ import irc.bot
 import requests
 
 from k4thy import databasecon
+from k4thy import viewermngr
 
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
@@ -31,6 +35,8 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, 'oauth:' + token)], username, username)
 
         self.bucket = databasecon.DBCon()
+        self.vmgr = viewermngr.Vmanager(channel)
+        self.vmgr.start()
 
     def on_welcome(self, c, e):
         print('Joining ' + self.channel)
@@ -74,7 +80,10 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             message = "This is an example bot, replace this text with your schedule text."
             c.privmsg(self.channel, message)
         elif cmd == "kernels":
-            c.privmsg(self.channel, e.source.nick + ", you have " + str(self.bucket.get_points(e.source.nick)) + " kernels")
+            c.privmsg(self.channel, e.source.nick + ", you have " +
+                      str(self.bucket.get_points(e.source.nick)) + " kernels")
+        elif cmd == "hw":
+            c.privmsg(self.channel, "Hello World!")
         elif cmd == "donate":
             args = e.arguments[0].split(' ')
             if len(args) != 3:
