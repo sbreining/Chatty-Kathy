@@ -1,8 +1,8 @@
-'''
+"""
 This will handle the connection to the database
 I will use sqlite. And so far it will hold viewers
 and their loyalty point values.
-'''
+"""
 
 import os
 import sqlite3
@@ -21,7 +21,7 @@ class DBCon:
         n = name.lower()  # Make sure the name passed in is all lowercase.
         try:
             with self.db:
-                self.db.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 0,))
+                self.db.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 1,))
         except sqlite3.IntegrityError:
             return False
         return True

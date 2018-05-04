@@ -1,12 +1,13 @@
-'''
+"""
+THIS HAS BEEN DISCONTINUED IN FAVOR OF A DATABASE.
+
+Going to start with sqlite.
+This can be found in databasecon.py
+
 This class monitors the viewers.
 It will handle loyalty points mostly.
 If other functions arise, I will update this description.
-
-This has been discontinued in favor a database.
-Going to start with sqlite.
-This can be found in databasecon.py
-'''
+"""
 
 import os
 

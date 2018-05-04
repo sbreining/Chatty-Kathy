@@ -1,3 +1,10 @@
+"""
+This is probably inappropriately named. It should probably be called
+time manager, as it adds one point to each viewer every five
+minutes. It doesn't really manager the viewers all that much.
+So my name is poor, but I'm not going to change it.
+"""
+
 import time
 import requests
 from threading import Thread
@@ -25,6 +32,5 @@ class Vmanager(Thread):
                     continue
                 else:
                     self.db.add_points(v, 1)
-            time.sleep(10)
+            time.sleep(300)
             del r
-            print('finished iteration')
