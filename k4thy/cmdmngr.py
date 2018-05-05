@@ -8,7 +8,7 @@ to the next item in the queue.
 """
 import time
 import requests
-from threading import Thread, Lock
+from threading import Thread
 
 
 class Cmdmngr(Thread):
@@ -47,43 +47,46 @@ class Cmdmngr(Thread):
             cmd[1].privmsg(self.channel, r['display_name'] + ' channel title is currently ' + r['status'])
 
         elif cmd[0] == "kernels":
-            cmd[1].privmsg(self.channel, cmd[2].source.nick + ", you have " +
+            cmd[1].privmsg(self.channel, "/w " + cmd[2].source.nick + " You have " +
                            str(self.bucket.get_points(cmd[2].source.nick)) + " kernels")
 
         elif cmd[0] == "donate":
             args = cmd[2].arguments[0].split(' ')
             if len(args) != 3:
-                message = 'Incorrect use of !donate, should be: "!donate [amount] [user]"'
+                message = 'Incorrect use of !donate, should be: "!donate [amount] @[user]"'
                 cmd[1].privmsg(self.channel, message)
             else:
                 self.lock.acquire()
-                cmd[1].privmsg(self.channel, self.bucket.transfer_points(cmd[2].source.nick, args[2], args[1]))
+                cmd[1].privmsg(self.channel, self.bucket.transfer_points(cmd[2].source.nick, args[2][1:], args[1]))
                 self.lock.release()
 
-        # TODO: Check if command was issued by a mod or channel owner.
         elif cmd[0] == "addcom":
             print(cmd[1])
             if cmd[2].tags[5]['value'] == '0':  # Is this right?
                 self.no_permission(cmd[1])
                 return
             args = cmd[2].arguments[0].split('\"')
+            if len(args) != 3:
+                cmd[1].privmsg(self.channel, "Incorrect use of addcom")
+                return
             commands = args[0].split(' ')
             if self.bucket.add_command(commands[1], args[1]):
                 cmd[1].privmsg(self.channel, "Command was added successfully")
             else:
                 cmd[1].privmsg(self.channel, "Command was NOT added, could already exist")
 
-        # TODO: Check if command was issued by a mod or channel owner.
         elif cmd[0] == "rmvcom":
-            # 5 is the key-value pair 'key': 'mod' 'value': '0' or '1'
             if cmd[2].tags[5]['value'] == '0':
                 self.no_permission(cmd[1])
                 return
             args = cmd[2].arguments[0].split(' ')
+            if len(args) != 2:
+                cmd[1].privmsg(self.channel, "Incorrect use of rmvcom")
+                return
             if self.bucket.remove_command(args[1]):
                 cmd[1].privmsg(self.channel, "Command was removed successfully")
             else:
-                cmd[1].privmsg(self.channel, "Command was NOT removed, might it not exist?")
+                cmd[1].privmsg(self.channel, "Command was NOT removed, might not exist?")
         # The command was not recognized
         else:
             cmd[1].privmsg(self.channel, self.bucket.get_command_response(cmd[0]))

@@ -6,8 +6,9 @@ So my name is poor, but I'm not going to change it.
 """
 
 import time
+import json
 import requests
-from threading import Thread, Lock
+from threading import Thread
 
 
 class Vmanager(Thread):
@@ -20,7 +21,10 @@ class Vmanager(Thread):
     def run(self):
         url = "https://tmi.twitch.tv/group/user/" + self.streamer + "/chatters"
         while True:
-            r = requests.get(url).json()
+            try:
+                r = requests.get(url).json()
+            except json.JSONDecodeError:
+                continue
             viewers = []
             chatters = r["chatters"]
             for group in chatters:

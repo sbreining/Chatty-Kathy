@@ -70,10 +70,10 @@ class DBCon:
         return donator + " gave " + str(v) + " kernels to " + receiver
 
     '''
-    TODO: Come back to this function. I will be adding more functions to handle creating
-          custom text-only commands. I have created the table, and inserted 'schedule' and
-          'raffle' as test commands. Now I need to add the ability to add and remove
-          commands, accessible by mods only.
+    ------ Begin functions for textcommands table ------
+    These functions access the textcommands table, which is a table of text-only commands.
+    This will allow mods to add informational text-only response commands to the channel
+    at any time.
     '''
 
     def get_command_response(self, cmd):
