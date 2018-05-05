@@ -68,3 +68,18 @@ class DBCon:
                 self.subtract_points(donator, v)
                 self.add_points(receiver, v)
         return donator + " gave " + str(v) + " kernels to " + receiver
+
+    '''
+    TODO: Come back to this function. I will be adding more functions to handle creating
+          custom text-only commands. I have created the table, and inserted 'schedule' and
+          'raffle' as test commands. Now I need to add the ability to add and remove
+          commands, accessible by mods only.
+    '''
+
+    def get_command_response(self, cmd):
+        command = cmd.lower()
+        try:
+            with self.db:
+                return self.cur.execute("SELECT response FROM textcommands WHERE command=?", (command,)).fetchone()[0]
+        except sqlite3.IntegrityError:
+            return "Command does not exist in table"

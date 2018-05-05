@@ -7,14 +7,15 @@ So my name is poor, but I'm not going to change it.
 
 import time
 import requests
-from threading import Thread
+from threading import Thread, Lock
 
 
 class Vmanager(Thread):
-    def __init__(self, db, s):
+    def __init__(self, db, s, l):
         super().__init__()
-        self.db = db
         self.streamer = s
+        self.db = db
+        self.lock = l
 
     def run(self):
         url = "https://tmi.twitch.tv/group/user/" + self.streamer + "/chatters"
@@ -25,12 +26,12 @@ class Vmanager(Thread):
             for group in chatters:
                 viewers += chatters[group]
 
-            print(viewers)
-
+            self.lock.acquire()
             for v in viewers:
                 if self.db.add_new_viewer(v):
                     continue
                 else:
                     self.db.add_points(v, 1)
+            self.lock.release()
             time.sleep(300)
             del r
