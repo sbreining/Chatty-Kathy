@@ -78,8 +78,26 @@ class DBCon:
 
     def get_command_response(self, cmd):
         command = cmd.lower()
+        response = self.cur.execute("SELECT response FROM textcommands WHERE command=?", (command,)).fetchone()
+        if response is None:
+            return "Not a valid command"
+        else:
+            return response[0]
+
+    def add_command(self, cmd, response):
+        c = cmd.lower()  # Make sure the name passed in is all lowercase.
         try:
             with self.db:
-                return self.cur.execute("SELECT response FROM textcommands WHERE command=?", (command,)).fetchone()[0]
+                self.db.execute("INSERT INTO textcommands(command, response) VALUES (?, ?)", (c, response,))
         except sqlite3.IntegrityError:
-            return "Command does not exist in table"
+            return False
+        return True
+
+    def remove_command(self, cmd):
+        c = cmd.lower()
+        try:
+            with self.db:
+                self.db.execute("DELETE FROM textcommands WHERE command=?", (c,))
+        except sqlite3.IntegrityError:
+            return False
+        return True

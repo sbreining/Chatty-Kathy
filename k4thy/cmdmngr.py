@@ -33,9 +33,6 @@ class Cmdmngr(Thread):
             time.sleep(2)
 
     def exec_cmd(self, cmd):
-
-        print(str(cmd[2]))
-
         if cmd[0] == "game":
             url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
             headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
@@ -51,10 +48,7 @@ class Cmdmngr(Thread):
 
         elif cmd[0] == "kernels":
             cmd[1].privmsg(self.channel, cmd[2].source.nick + ", you have " +
-                      str(self.bucket.get_points(cmd[2].source.nick)) + " kernels")
-
-        elif cmd[0] == "hw":
-            cmd[1].privmsg(self.channel, "Hello World!")
+                           str(self.bucket.get_points(cmd[2].source.nick)) + " kernels")
 
         elif cmd[0] == "donate":
             args = cmd[2].arguments[0].split(' ')
@@ -66,6 +60,33 @@ class Cmdmngr(Thread):
                 cmd[1].privmsg(self.channel, self.bucket.transfer_points(cmd[2].source.nick, args[2], args[1]))
                 self.lock.release()
 
+        # TODO: Check if command was issued by a mod or channel owner.
+        elif cmd[0] == "addcom":
+            print(cmd[1])
+            if cmd[2].tags[5]['value'] == '0':  # Is this right?
+                self.no_permission(cmd[1])
+                return
+            args = cmd[2].arguments[0].split('\"')
+            commands = args[0].split(' ')
+            if self.bucket.add_command(commands[1], args[1]):
+                cmd[1].privmsg(self.channel, "Command was added successfully")
+            else:
+                cmd[1].privmsg(self.channel, "Command was NOT added, could already exist")
+
+        # TODO: Check if command was issued by a mod or channel owner.
+        elif cmd[0] == "rmvcom":
+            # 5 is the key-value pair 'key': 'mod' 'value': '0' or '1'
+            if cmd[2].tags[5]['value'] == '0':
+                self.no_permission(cmd[1])
+                return
+            args = cmd[2].arguments[0].split(' ')
+            if self.bucket.remove_command(args[1]):
+                cmd[1].privmsg(self.channel, "Command was removed successfully")
+            else:
+                cmd[1].privmsg(self.channel, "Command was NOT removed, might it not exist?")
         # The command was not recognized
         else:
             cmd[1].privmsg(self.channel, self.bucket.get_command_response(cmd[0]))
+
+    def no_permission(self, c):
+        c.privmsg(self.channel, "You don't have permission to use that command")
