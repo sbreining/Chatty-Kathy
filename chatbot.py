@@ -32,7 +32,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         r = requests.get(url, headers=headers).json()
         self.channel_id = r['users'][0]['_id']
 
-        # Create IRC bot connection
+        # Create IRC bot connections
         server = 'irc.chat.twitch.tv'
         port = 6667
         print('Connecting to ' + server + ' on port ' + str(port) + '...')

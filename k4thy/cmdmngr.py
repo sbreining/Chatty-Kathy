@@ -9,6 +9,7 @@ to the next item in the queue.
 import time
 import requests
 from threading import Thread
+from k4thy import rafflemngr
 
 
 class Cmdmngr(Thread):
@@ -20,6 +21,7 @@ class Cmdmngr(Thread):
         self.channel = chan
         self.bucket = bins
         self.lock = l
+        self._raffle_manager = rafflemngr.RaffleMngr(c_id, cl_id, chan)
 
     def enqueue(self, cmd, conn, e):
         self.queue.append([cmd, conn, e])
@@ -46,6 +48,10 @@ class Cmdmngr(Thread):
             r = requests.get(url, headers=headers).json()
             cmd[1].privmsg(self.channel, r['display_name'] + ' channel title is currently ' + r['status'])
 
+        #
+        # ----- Here begins point based commands -----
+        #
+
         elif cmd[0] == "kernels":
             cmd[1].privmsg(self.channel, "/w " + cmd[2].source.nick + " You have " +
                            str(self.bucket.get_points(cmd[2].source.nick)) + " kernels")
@@ -59,6 +65,10 @@ class Cmdmngr(Thread):
                 self.lock.acquire()
                 cmd[1].privmsg(self.channel, self.bucket.transfer_points(cmd[2].source.nick, args[2][1:], args[1]))
                 self.lock.release()
+
+        #
+        # ----- Here begins mod commands -----
+        #
 
         elif cmd[0] == "addcom":
             print(cmd[1])
@@ -87,6 +97,24 @@ class Cmdmngr(Thread):
                 cmd[1].privmsg(self.channel, "Command was removed successfully")
             else:
                 cmd[1].privmsg(self.channel, "Command was NOT removed, might not exist?")
+
+        #
+        # ----- Here beings raffle commands
+        #
+        # TODO: Finish implementing raffle commands (need cancel and close).
+        elif cmd[0] == "beginraf":
+            cmds = cmd[2].arguments[0].split(' ')
+            args = [cmds[3].split('='), cmds[4].split('=')]
+            if cmd[2].tags[0]['value'][:-2] == 'broadcaster':
+                self._raffle_manager.set_options(args, cmd)
+                self._raffle_manager.start()
+            else:
+                return
+
+        elif cmd[0] == "ticket":
+            args = cmd[2].arguments[0].split(' ')
+            return
+
         # The command was not recognized
         else:
             cmd[1].privmsg(self.channel, self.bucket.get_command_response(cmd[0]))
