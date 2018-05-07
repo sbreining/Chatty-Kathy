@@ -56,23 +56,13 @@ class Cmdmngr(Thread):
             cmd[1].privmsg(self.channel, "/w " + cmd[2].source.nick + " You have " +
                            str(self.bucket.get_points(cmd[2].source.nick)) + " kernels")
 
-        elif cmd[0] == "donate":
-            args = cmd[2].arguments[0].split(' ')
-            if len(args) != 3:
-                message = 'Incorrect use of !donate, should be: "!donate [amount] @[user]"'
-                cmd[1].privmsg(self.channel, message)
-            else:
-                self.lock.acquire()
-                cmd[1].privmsg(self.channel, self.bucket.transfer_points(cmd[2].source.nick, args[2][1:], args[1]))
-                self.lock.release()
-
         #
         # ----- Here begins mod commands -----
         #
 
         elif cmd[0] == "addcom":
-            print(cmd[1])
-            if cmd[2].tags[5]['value'] == '0':  # Is this right?
+            if cmd[2].tags[0]['value'][:-2] != 'moderator'\
+                    and cmd[2].tags[0]['value'][:-2] != 'broadcaster':
                 self.no_permission(cmd[1])
                 return
             args = cmd[2].arguments[0].split('\"')
@@ -86,7 +76,8 @@ class Cmdmngr(Thread):
                 cmd[1].privmsg(self.channel, "Command was NOT added, could already exist")
 
         elif cmd[0] == "rmvcom":
-            if cmd[2].tags[5]['value'] == '0':
+            if cmd[2].tags[0]['value'][:-2] != 'moderator'\
+                    and cmd[2].tags[0]['value'][:-2] != 'broadcaster':
                 self.no_permission(cmd[1])
                 return
             args = cmd[2].arguments[0].split(' ')
