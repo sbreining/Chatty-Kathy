@@ -16,6 +16,11 @@ class TestDataBaseCon(unittest.TestCase):
         self.assertEqual(self.db.get_points('disneyprincess0293'), 13)
 
 
-test = TestDataBaseCon()
-test.test_add_new_viewer()
-test.test_get_points()
+def main():
+    test = TestDataBaseCon()
+    test.test_add_new_viewer()
+    test.test_get_points()
+
+
+if __name__ == "__main__":
+    main()

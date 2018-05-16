@@ -8,7 +8,6 @@ CONDITIONS OF ANY KIND, either express or implied. See the License for the speci
 limitations under the License.
 """
 
-import sys
 import irc.bot
 import requests
 
@@ -69,7 +68,13 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         c = self.connection
         self.cmdmgr.enqueue(cmd, c, e)
 
+    def send_message(self, string, whisper=False, target=''):
+        if whisper:
+            self.connection.privmsg(self.channel, '/w' + target + ' ' + string)
+        else:
+            self.connection.privmsg(self.channel, string)
 
+'''
 def main():
     if len(sys.argv) != 5:
         print("Usage: twitchbot <username> <client id> <token> <channel>")
@@ -86,3 +91,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''

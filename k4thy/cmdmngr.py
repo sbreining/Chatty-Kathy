@@ -12,6 +12,7 @@ from threading import Thread
 from k4thy import rafflemngr
 
 
+# TODO: REFACTOR THIS WHOLE FILE TO CALL ONE FUNCTION IN CHATBOT.PY THAT WILL SEND MESSAGES
 class Cmdmngr(Thread):
     def __init__(self, c_id, cl_id, chan, bins, l):
         super().__init__()
