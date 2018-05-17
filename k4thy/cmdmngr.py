@@ -6,26 +6,27 @@ Essentially, a user issues the command, the command is sent here to be queued up
 And the queue pops the commands one at a time and fully executes it before going
 to the next item in the queue.
 """
+import re
 import time
 import requests
 from threading import Thread
+
 from k4thy import rafflemngr
 
 
-# TODO: REFACTOR THIS WHOLE FILE TO CALL ONE FUNCTION IN CHATBOT.PY THAT WILL SEND MESSAGES
 class Cmdmngr(Thread):
-    def __init__(self, c_id, cl_id, chan, bins, l):
+    def __init__(self, b, c_id, cl_id, bins, l):
         super().__init__()
         self.queue = []
+        self.bot = b
         self.channel_id = c_id
         self.client_id = cl_id
-        self.channel = chan
         self.bucket = bins
         self.lock = l
-        self._raffle_manager = rafflemngr.RaffleMngr(c_id, cl_id, chan)
+        self._raffle_manager = rafflemngr.RaffleMngr(b)
 
-    def enqueue(self, cmd, conn, e):
-        self.queue.append([cmd, conn, e])
+    def enqueue(self, cmd, e):
+        self.queue.append([cmd, e])
 
     def run(self):
         while True:
@@ -37,79 +38,96 @@ class Cmdmngr(Thread):
 
     def exec_cmd(self, cmd):
         if cmd[0] == "game":
-            url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
-            headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            cmd[1].privmsg(self.channel, r['display_name'] + ' is currently playing ' + r['game'])
+            r = self.get_streamer_info()
+            self.bot.send_message(r['display_name'] + ' is currently playing ' + r['game'])
 
-        # Poll the API the get the current status of the stream
+        # Poll the API to get current stream info
         elif cmd[0] == "title":
-            url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
-            headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            cmd[1].privmsg(self.channel, r['display_name'] + ' channel title is currently ' + r['status'])
+            r = self.get_streamer_info()
+            self.bot.send_message(r['display_name'] + ' channel title is currently ' + r['status'])
 
         #
         # ----- Here begins point based commands -----
         #
 
         elif cmd[0] == "kernels":
-            cmd[1].privmsg(self.channel, "/w " + cmd[2].source.nick + " You have " +
-                           str(self.bucket.get_points(cmd[2].source.nick)) + " kernels")
+            self.bot.send_message("You have " + str(self.bucket.get_points(cmd[1].source.nick)) + " kernels",
+                                  whisper=True, target=cmd[1].source.nick)
 
         #
         # ----- Here begins mod commands -----
         #
 
         elif cmd[0] == "addcom":
-            if cmd[2].tags[0]['value'][:-2] != 'moderator'\
-                    and cmd[2].tags[0]['value'][:-2] != 'broadcaster':
-                self.no_permission(cmd[1])
+            if cmd[1].tags[0]['value'][:-2] != 'moderator'\
+                    and cmd[1].tags[0]['value'][:-2] != 'broadcaster':
+                self.no_permission()
                 return
-            args = cmd[2].arguments[0].split('\"')
+            args = cmd[1].arguments[0].split('\"')
             if len(args) != 3:
-                cmd[1].privmsg(self.channel, "Incorrect use of addcom")
+                self.bot.send_message("Incorrect use of addcom")
                 return
             commands = args[0].split(' ')
             if self.bucket.add_command(commands[1], args[1]):
-                cmd[1].privmsg(self.channel, "Command was added successfully")
+                self.bot.send_message("Command was added successfully")
             else:
-                cmd[1].privmsg(self.channel, "Command was NOT added, could already exist")
+                self.bot.send_message("Command was NOT added, could already exist")
 
         elif cmd[0] == "rmvcom":
-            if cmd[2].tags[0]['value'][:-2] != 'moderator'\
-                    and cmd[2].tags[0]['value'][:-2] != 'broadcaster':
-                self.no_permission(cmd[1])
+            if cmd[1].tags[0]['value'][:-2] != 'moderator'\
+                    and cmd[1].tags[0]['value'][:-2] != 'broadcaster':
+                self.no_permission()
                 return
-            args = cmd[2].arguments[0].split(' ')
+            args = cmd[1].arguments[0].split(' ')
             if len(args) != 2:
-                cmd[1].privmsg(self.channel, "Incorrect use of rmvcom")
+                self.bot.send_message("Incorrect use of rmvcom")
                 return
             if self.bucket.remove_command(args[1]):
-                cmd[1].privmsg(self.channel, "Command was removed successfully")
+                self.bot.send_message("Command was removed successfully")
             else:
-                cmd[1].privmsg(self.channel, "Command was NOT removed, might not exist?")
+                self.bot.send_message("Command was NOT removed, might not exist?")
 
         #
         # ----- Here beings raffle commands
         #
         # TODO: Finish implementing raffle commands (need cancel and close).
         elif cmd[0] == "beginraf":
-            cmds = cmd[2].arguments[0].split(' ')
-            args = [cmds[3].split('='), cmds[4].split('=')]
-            if cmd[2].tags[0]['value'][:-2] == 'broadcaster':
-                self._raffle_manager.set_options(args, cmd)
+            mt, t = self.parse_flags(cmd[1].arguments[0])
+            if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
+                self._raffle_manager.set_options(cmd, mt, t)
                 self._raffle_manager.start()
             else:
                 return
 
         elif cmd[0] == "ticket":
-            args = cmd[2].arguments[0].split(' ')
+            args = cmd[1].arguments[0].split(' ')
             return
+
+        # Quit the bot all together, careful with this one
+        elif cmd[0] == "quitbot":
+            self.bot.send_message("This will eventually call a function, or functions, to kill all threads")
 
         # The command was not recognized
         else:
-            cmd[1].privmsg(self.channel, self.bucket.get_command_response(cmd[0]))
+            self.bot.send_message(self.bucket.get_command_response(cmd[0]))
 
-    def no_permission(self, c):
-        c.privmsg(self.channel, "You don't have permission to use that command")
+    #
+    # ------ Here starts miscellaneous helper functions
+    #
+    def no_permission(self):
+        self.bot.send_message("You don't have permission to use that command")
+
+    def get_streamer_info(self):
+        url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
+        headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+        return requests.get(url, headers=headers).json()
+
+    def parse_flags(self, s):
+        mt = t = 0
+        m = re.match(r'(\S+) (-m )*(?P<max_tick>\d+)*( )*(-t )*(?P<time>\d+)*', s)
+        m.groupdict()
+        if m['max_tick']:
+            mt = m['max_tick']
+        if m['time']:
+            t = m['time']
+        return mt, t

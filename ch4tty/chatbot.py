@@ -39,8 +39,8 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
 
         self.bucket = databasecon.DBCon()
 
-        self.cmdmgr = cmdmngr.Cmdmngr(self.channel_id, self.client_id,
-                                      self.channel, self.bucket, self.lock)
+        self.cmdmgr = cmdmngr.Cmdmngr(self, self.channel_id, self.client_id,
+                                      self.bucket, self.lock)
         self.cmdmgr.start()
 
         self.vmgr = viewermngr.Vmanager(self.bucket, channel, self.lock)
@@ -56,7 +56,6 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
 
     def on_pubmsg(self, c, e):
-
         # If a chat message starts with an exclamation point, try to run it as a command
         if e.arguments[0][:1] == '!':
             cmd = e.arguments[0].split(' ')[0][1:]
@@ -65,30 +64,10 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         return
 
     def do_command(self, e, cmd):
-        c = self.connection
-        self.cmdmgr.enqueue(cmd, c, e)
+        self.cmdmgr.enqueue(cmd, e)
 
     def send_message(self, string, whisper=False, target=''):
         if whisper:
-            self.connection.privmsg(self.channel, '/w' + target + ' ' + string)
+            self.connection.privmsg(self.channel, '/w ' + target + ' ' + string)
         else:
             self.connection.privmsg(self.channel, string)
-
-'''
-def main():
-    if len(sys.argv) != 5:
-        print("Usage: twitchbot <username> <client id> <token> <channel>")
-        sys.exit(1)
-
-    username = sys.argv[1]
-    client_id = sys.argv[2]
-    token = sys.argv[3]
-    channel = sys.argv[4]
-
-    bot = TwitchBot(username, client_id, token, channel)
-    bot.start()
-
-
-if __name__ == "__main__":
-    main()
-'''
