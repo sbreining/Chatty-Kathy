@@ -101,11 +101,14 @@ class Cmdmngr(Thread):
 
         elif cmd[0] == "ticket":
             args = cmd[1].arguments[0].split(' ')
+            user_total_tickets = self.bucket.get_points(cmd[1].source.nick)
+            if user_total_tickets > args[1]:
+                self.bot.send_message("You don't have that many tickets to submit. Your \
+                                       total tickets are " + str(user_total_tickets),
+                                      True, cmd[1].source.nick)
+            else:
+                self._raffle_manager.submit_tickets(cmd[1].source.nick, args[1])
             return
-
-        # Quit the bot all together, careful with this one
-        elif cmd[0] == "quitbot":
-            self.bot.send_message("This will eventually call a function, or functions, to kill all threads")
 
         # The command was not recognized
         else:

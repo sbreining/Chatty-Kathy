@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../')
+
 import unittest
 from k4thy.databasecon import DBCon
 
