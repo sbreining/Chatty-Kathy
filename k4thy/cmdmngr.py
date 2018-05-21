@@ -2,7 +2,7 @@
 This will hold a queue of the commands that can be executed by the bot.
 This is how I will handle synchronization. Forcing all the commands to go
 through here.
-Essentially, a user issues the command, the command is sent here to be queued up.
+A user issues the command, the command is sent here to be queued up.
 And the queue pops the commands one at a time and fully executes it before going
 to the next item in the queue.
 """
@@ -23,7 +23,7 @@ class Cmdmngr(Thread):
         self.client_id = cl_id
         self.bucket = bins
         self.lock = l
-        self._raffle_manager = rafflemngr.RaffleMngr(b)
+        self._raffle_manager = rafflemngr.RaffleMngr(b, bins)
 
     def enqueue(self, cmd, e):
         self.queue.append([cmd, e])
@@ -39,20 +39,27 @@ class Cmdmngr(Thread):
     def exec_cmd(self, cmd):
         if cmd[0] == "game":
             r = self.get_streamer_info()
-            self.bot.send_message(r['display_name'] + ' is currently playing ' + r['game'])
+            self.bot.send_message(r['display_name'] +
+                                  ' is currently playing ' +
+                                  r['game'])
 
         # Poll the API to get current stream info
         elif cmd[0] == "title":
             r = self.get_streamer_info()
-            self.bot.send_message(r['display_name'] + ' channel title is currently ' + r['status'])
+            self.bot.send_message(r['display_name'] +
+                                  ' channel title is currently ' +
+                                  r['status'])
 
         #
         # ----- Here begins point based commands -----
         #
 
         elif cmd[0] == "kernels":
-            self.bot.send_message("You have " + str(self.bucket.get_points(cmd[1].source.nick)) + " kernels",
-                                  whisper=True, target=cmd[1].source.nick)
+            self.bot.send_message("You have "
+                                  + str(self.bucket.get_points(cmd[1].source.nick))
+                                  + " kernels",
+                                  whisper=True,
+                                  target=cmd[1].source.nick)
 
         #
         # ----- Here begins mod commands -----
@@ -106,6 +113,9 @@ class Cmdmngr(Thread):
                 self.bot.send_message("You don't have that many tickets to submit. Your \
                                        total tickets are " + str(user_total_tickets),
                                       True, cmd[1].source.nick)
+            elif user_total_tickets < 0:
+                self.bot.send_message("Don't be an idiot trying to submit less than \
+                                      0 tickets", True, cmd[1].source.nick)
             else:
                 self._raffle_manager.submit_tickets(cmd[1].source.nick, args[1])
             return
@@ -125,7 +135,8 @@ class Cmdmngr(Thread):
         headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
         return requests.get(url, headers=headers).json()
 
-    def parse_flags(self, s):
+    @staticmethod
+    def parse_flags(s):
         mt = t = 0
         m = re.match(r'(\S+) (-m )*(?P<max_tick>\d+)*( )*(-t )*(?P<time>\d+)*', s)
         m.groupdict()

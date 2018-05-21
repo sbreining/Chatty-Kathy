@@ -1,20 +1,23 @@
 """
 This class will handle raffles.
 """
+import random
 import time
 from threading import Thread
 
 
 class RaffleMngr(Thread):
-    def __init__(self, b):
+    def __init__(self, b, bins):
         super().__init__()
-        self._floating_points = []
+        self._entered_users = []
+        self._users_tickets = []
         self._time_limit = 0
         self._max_tickets = 0
+        self._total_tickets_entered = 0
         self.bot = b
         self.cmd = []
         self.open = False
-        self.winner = ""
+        self.bucket = bins
 
     def set_options(self, cmd, m, t):
         self._max_tickets = int(m)
@@ -33,7 +36,9 @@ class RaffleMngr(Thread):
         self.bot.send_message("RAFFLE IS NOW CLOSED!")
         self.open = False
         self.pick_winner()
+        self._reset_raffle()
 
+    # TODO: Need to check if user is already in raffle. Don't want to add the twice.
     def submit_tickets(self, viewer, tickets):
         if self.open:
             if tickets > self._max_tickets:
@@ -41,21 +46,38 @@ class RaffleMngr(Thread):
                                        please submit at most " + str(self._max_tickets),
                                       True, viewer)
             else:
-                self._floating_points.append([viewer, tickets])
+                self._entered_users.append([viewer, tickets])
+                self._users_tickets.append(tickets)
+                self._total_tickets_entered += tickets
         else:
             self.bot.send_message("There is no raffle open right now")
 
     # TODO: Implement logic to randomly pick a winner based on weights
     def pick_winner(self):
+        self.take_user_tickets()
+        _user_weights = []
+        for i in range(0, len(self._users_tickets)):
+            _user_weights.append(self._users_tickets[i] / self._total_tickets_entered)
+        winner = random.choices(self._entered_users, weights=_user_weights, k=1)
+        self.bot.send_message("And the winner is: " + winner + "!!! \n You have \
+                               60 seconds to respond by typing into chat.")
+        counter = 0
+        while counter < 60:
+            time.sleep(1)
+            counter += 1
+
         pass
 
-    # TODO: Implement logic to redraw in the even the winner isn't there.
+    # TODO: Implement logic to redraw in the event the winner isn't present.
     def redraw_winner(self):
         pass
 
-    def get_winner(self):
-        return self.winner
-
-    # TODO: Take away each users tickets that they submitted. They are not refunded if they lost.
     def take_user_tickets(self):
+        for u in self._entered_users:
+            self.bucket.subtract_points(u[0], u[1])
         pass
+
+    def _reset_raffle(self):
+        self._entered_users = []
+        self._users_tickets = []
+        self._total_tickets_entered = 0

@@ -13,7 +13,8 @@ class DBCon:
         d = os.path.dirname(__file__)
         docs_path = os.path.join(d, '../docs/')
 
-        self.db = sqlite3.connect(docs_path + "kettlebase.db", check_same_thread=False)
+        self.db = sqlite3.connect(docs_path + "kettlebase.db",
+                                  check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.cur = self.db.cursor()
 
@@ -48,6 +49,8 @@ class DBCon:
             p -= v
         self.update_points(name, p)
 
+    # Not used in this project. Didn't want users watching with multiple accounts, then
+    # just donating all the points to one central account to enter raffles.
     def transfer_points(self, donator, receiver, amount):
         p = self.get_points(donator)
         try:
