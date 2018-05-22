@@ -18,6 +18,8 @@ class RaffleMngr(Thread):
         self.cmd = []
         self.open = False
         self.bucket = bins
+        self._is_closed_manually = False
+        self._thread_is_stopped = False
 
     def set_options(self, cmd, m, t):
         self._max_tickets = int(m)
@@ -28,15 +30,19 @@ class RaffleMngr(Thread):
         self.open = True
         self.bot.send_message("THE RAFFLE IS NOW OPEN!")
         counter = 0
-        while counter < self._time_limit:
-            time.sleep(1)
-            if counter == self._time_limit-60:
-                self.bot.send_message("THE RAFFLE HAS 60 SECONDS LEFT!")
-            counter += 1
-        self.bot.send_message("RAFFLE IS NOW CLOSED!")
-        self.open = False
-        self.pick_winner()
-        self._reset_raffle()
+        while not self._thread_is_stopped:
+            while counter < self._time_limit or self._time_limit == 0:
+                time.sleep(1)
+                if counter == self._time_limit-60:
+                    self.bot.send_message("THE RAFFLE HAS 60 SECONDS LEFT!")
+                counter += 1
+                if self._is_closed_manually:
+                    break
+            self.bot.send_message("RAFFLE IS NOW CLOSED!")
+            self.open = False
+            self.pick_winner()
+            self._reset_raffle()
+            self._thread_is_stopped = True
 
     # TODO: Need to check if user is already in raffle. Don't want to add the twice.
     def submit_tickets(self, viewer, tickets):
@@ -52,7 +58,7 @@ class RaffleMngr(Thread):
         else:
             self.bot.send_message("There is no raffle open right now")
 
-    # TODO: Implement logic to randomly pick a winner based on weights
+    # TODO: Need to listen for winner now, and redraw if no response.
     def pick_winner(self):
         self.take_user_tickets()
         _user_weights = []
@@ -81,3 +87,10 @@ class RaffleMngr(Thread):
         self._entered_users = []
         self._users_tickets = []
         self._total_tickets_entered = 0
+
+    def interrupt(self):
+        self._thread_is_stopped = True
+        self._reset_raffle()
+
+    def manual_close_raffle(self):
+        self._is_closed_manually = True

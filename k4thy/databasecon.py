@@ -96,6 +96,10 @@ class DBCon:
             return False
         return True
 
+    def update_command(self, cmd, response):
+        c = cmd.lower()
+        self.db.execute("UPDATE textcommands SET response=? WHERE command=?", (response, c,))
+
     def remove_command(self, cmd):
         c = cmd.lower()
         try:

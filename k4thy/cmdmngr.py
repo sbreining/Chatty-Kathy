@@ -55,11 +55,8 @@ class Cmdmngr(Thread):
         #
 
         elif cmd[0] == "kernels":
-            self.bot.send_message("You have "
-                                  + str(self.bucket.get_points(cmd[1].source.nick))
-                                  + " kernels",
-                                  whisper=True,
-                                  target=cmd[1].source.nick)
+            self.bot.send_message("You have " + str(self.bucket.get_points(cmd[1].source.nick))
+                                  + " kernels", whisper=True, target=cmd[1].source.nick)
 
         #
         # ----- Here begins mod commands -----
@@ -94,10 +91,22 @@ class Cmdmngr(Thread):
             else:
                 self.bot.send_message("Command was NOT removed, might not exist?")
 
+        # TODO: One more check to handle, that is if the command doesn't exist.
+        elif cmd[0] == "updatecom":
+            if cmd[1].tags[0]['value'][:-2] != 'moderator'\
+                    and cmd[1].tags[0]['value'][:-2] != 'broadcaster':
+                self.no_permission()
+                return
+            args = cmd[1].arguments[0].split('\"')
+            if len(args) != 3:
+                self.bot.send_message("Incorrect use of updatecom")
+                return
+            commands = args[0].split(' ')
+            self.bucket.update_command(commands[1], args[1])
+
         #
         # ----- Here beings raffle commands
         #
-        # TODO: Finish implementing raffle commands (need cancel and close).
         elif cmd[0] == "beginraf":
             mt, t = self.parse_flags(cmd[1].arguments[0])
             if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
@@ -106,18 +115,33 @@ class Cmdmngr(Thread):
             else:
                 return
 
+        elif cmd[0] == "cancelraf":
+            if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
+                self._raffle_manager.interrupt()
+
+        elif cmd[0] == "closeraf":
+            if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
+                self._raffle_manager.manual_close_raffle()
+
         elif cmd[0] == "ticket":
             args = cmd[1].arguments[0].split(' ')
             user_total_tickets = self.bucket.get_points(cmd[1].source.nick)
-            if user_total_tickets > args[1]:
+            try:
+                t = int(args[1])
+            except ValueError:
+                self.bot.send_message("To enter a drawing, you must enter with\
+                                      a whole number of tickets.",
+                                      True, cmd[1].source.nick)
+                return
+            if t > user_total_tickets:
                 self.bot.send_message("You don't have that many tickets to submit. Your \
                                        total tickets are " + str(user_total_tickets),
                                       True, cmd[1].source.nick)
-            elif user_total_tickets < 0:
+            elif t < 0:
                 self.bot.send_message("Don't be an idiot trying to submit less than \
                                       0 tickets", True, cmd[1].source.nick)
             else:
-                self._raffle_manager.submit_tickets(cmd[1].source.nick, args[1])
+                self._raffle_manager.submit_tickets(cmd[1].source.nick, t)
             return
 
         # The command was not recognized
