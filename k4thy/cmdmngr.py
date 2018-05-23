@@ -91,7 +91,6 @@ class Cmdmngr(Thread):
             else:
                 self.bot.send_message("Command was NOT removed, might not exist?")
 
-        # TODO: One more check to handle, that is if the command doesn't exist.
         elif cmd[0] == "updatecom":
             if cmd[1].tags[0]['value'][:-2] != 'moderator'\
                     and cmd[1].tags[0]['value'][:-2] != 'broadcaster':
@@ -102,16 +101,25 @@ class Cmdmngr(Thread):
                 self.bot.send_message("Incorrect use of updatecom")
                 return
             commands = args[0].split(' ')
-            self.bucket.update_command(commands[1], args[1])
+            if self.bucket.update_command(commands[1], args[1]):
+                self.bot.send_message("Command was updated successfully")
+            else:
+                self.bot.send_message("Command didn't update, does it exist?")
 
         #
         # ----- Here beings raffle commands
         #
         elif cmd[0] == "beginraf":
-            mt, t = self.parse_flags(cmd[1].arguments[0])
             if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
+                mt, t = self.parse_flags(cmd[1].arguments[0])
                 self._raffle_manager.set_options(cmd, mt, t)
                 self._raffle_manager.start()
+            else:
+                return
+
+        elif cmd[0] == "redraw":
+            if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
+                self._raffle_manager.redraw_winner()
             else:
                 return
 
@@ -122,6 +130,9 @@ class Cmdmngr(Thread):
         elif cmd[0] == "closeraf":
             if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
                 self._raffle_manager.manual_close_raffle()
+
+        elif cmd[0] == "here" and cmd[1].source.nick == self._raffle_manager.get_winner():
+            self._raffle_manager.winner_found()
 
         elif cmd[0] == "ticket":
             args = cmd[1].arguments[0].split(' ')
@@ -144,7 +155,9 @@ class Cmdmngr(Thread):
                 self._raffle_manager.submit_tickets(cmd[1].source.nick, t)
             return
 
-        # The command was not recognized
+        #
+        # ------------ The command was not recognized
+        #
         else:
             self.bot.send_message(self.bucket.get_command_response(cmd[0]))
 

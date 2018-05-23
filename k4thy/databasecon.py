@@ -73,7 +73,8 @@ class DBCon:
         return donator + " gave " + str(v) + " kernels to " + receiver
 
     '''
-    ------ Begin functions for textcommands table ------
+    ------------------ Begin functions for textcommands table ------------------
+    
     These functions access the textcommands table, which is a table of text-only commands.
     This will allow mods to add informational text-only response commands to the channel
     at any time.
@@ -98,7 +99,12 @@ class DBCon:
 
     def update_command(self, cmd, response):
         c = cmd.lower()
-        self.db.execute("UPDATE textcommands SET response=? WHERE command=?", (response, c,))
+        try:
+            with self.db:
+                self.db.execute("UPDATE textcommands SET response=? WHERE command=?", (response, c,))
+        except sqlite3.IntegrityError:
+            return False
+        return True
 
     def remove_command(self, cmd):
         c = cmd.lower()
