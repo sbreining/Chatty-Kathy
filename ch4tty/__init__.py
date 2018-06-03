@@ -3,6 +3,13 @@ from ch4tty.chatbot import TwitchBot
 
 
 def main():
+    """
+    Initiator of the program. Needs command line arguments to get started.
+    The arguments are needed at the command line because they are the secret
+    token and client id needed from starting a developer account with Twitch.
+
+    :return:
+    """
     if len(sys.argv) != 5:
         print("Usage: twitchbot <username> <client id> <token> <channel>")
         sys.exit(1)

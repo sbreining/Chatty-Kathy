@@ -2,14 +2,14 @@ import sys
 sys.path.append('../')
 
 import unittest
-from k4thy.databasecon import DBCon
+from k4thy.dbcon import DatabaseConnection
 
 
 class TestDataBaseCon(unittest.TestCase):
 
     def __init__(self):
         super(TestDataBaseCon, self).__init__()
-        self.db = DBCon()
+        self.db = DatabaseConnection()
 
     def test_add_new_viewer(self):
         self.assertTrue(self.db.add_new_viewer('John'))

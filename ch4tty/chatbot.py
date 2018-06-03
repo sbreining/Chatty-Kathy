@@ -11,13 +11,16 @@ limitations under the License.
 import irc.bot
 import requests
 
-from k4thy import databasecon
+from k4thy import dbcon
 from k4thy import viewermngr
 from k4thy import cmdmngr
 from threading import Lock
 
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
+    """
+    Modified the provided example from Twitch.
+    """
     def __init__(self, username, client_id, token, channel):
         self.client_id = client_id
         self.token = token
@@ -37,13 +40,13 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         print('Connecting to ' + server + ' on port ' + str(port) + '...')
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, 'oauth:' + token)], username, username)
 
-        self.bucket = databasecon.DBCon()
+        self.bucket = dbcon.DatabaseConnection()
 
-        self.cmdmgr = cmdmngr.Cmdmngr(self, self.channel_id, self.client_id,
-                                      self.bucket, self.lock)
+        self.cmdmgr = cmdmngr.CommandManager(self, self.channel_id, self.client_id,
+                                             self.bucket, self.lock)
         self.cmdmgr.start()
 
-        self.vmgr = viewermngr.Vmanager(self.bucket, channel, self.lock)
+        self.vmgr = viewermngr.ViewerManager(self.bucket, channel, self.lock)
         self.vmgr.start()
 
     def on_welcome(self, c, e):
@@ -59,15 +62,18 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         # If a chat message starts with an exclamation point, try to run it as a command
         if e.arguments[0][:1] == '!':
             cmd = e.arguments[0].split(' ')[0][1:]
-            print('Received command: ' + cmd)
-            self.do_command(e, cmd)
+            self.__do_command(e, cmd)
         return
-
-    def do_command(self, e, cmd):
-        self.cmdmgr.enqueue(cmd, e)
 
     def send_message(self, string, whisper=False, target=''):
         if whisper:
             self.connection.privmsg(self.channel, '/w ' + target + ' ' + string)
         else:
             self.connection.privmsg(self.channel, string)
+
+    #
+    # ---- 'Private Methods' ----
+    #
+
+    def __do_command(self, e, cmd):
+        self.cmdmgr.enqueue(cmd, e)

@@ -1,5 +1,0 @@
-something 9
-john 40
-steve 30
-alice 50
-mandy 30
