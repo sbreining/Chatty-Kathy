@@ -17,14 +17,15 @@ class ViewerManager(Thread):
     every 5 minutes, and then it attempts to add them to the database of all
     viewers, otherwise it just adds a point to their total points.
     """
-    def __init__(self, db, streamer, l):
+    def __init__(self, db, streamer, lock, headers):
         super().__init__()
         self.db = db
-        self.lock = l
+        self.lock = lock
 
         self.__is_online = False
         self.__url = "https://tmi.twitch.tv/group/user/" + streamer + "/chatters"
         self.__is_live_url = 'https://api.twitch.tv/helix/streams?user_login=' + streamer
+        self.headers = headers
 
     def run(self):
 
@@ -64,7 +65,7 @@ class ViewerManager(Thread):
 
         :return:
         """
-        r = requests.get(self.__is_live_url).json()
+        r = requests.get(self.__is_live_url, headers=self.headers).json()
         if r['data']:
             self.__is_online = True
         else:

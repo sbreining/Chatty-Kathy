@@ -46,7 +46,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
                                              self.bucket, self.lock)
         self.cmdmgr.start()
 
-        self.vmgr = viewermngr.ViewerManager(self.bucket, channel, self.lock)
+        self.vmgr = viewermngr.ViewerManager(self.bucket, channel, self.lock, headers)
         self.vmgr.start()
 
     def on_welcome(self, c, e):
