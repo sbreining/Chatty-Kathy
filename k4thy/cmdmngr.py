@@ -6,12 +6,12 @@ A user issues the command, the command is sent here to be queued up.
 And the queue pops the commands one at a time and fully executes it before going
 to the next item in the queue.
 """
-import re
 import sys
 import time
 import requests
 from threading import Thread
 
+from ch4tty import parse_flags
 from k4thy import rafflemngr
 
 
@@ -143,7 +143,7 @@ class CommandManager(Thread):
         #
         elif cmd[0] == "beginraf":
             if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
-                mt, t = self.parse_flags(cmd[1].arguments[0])
+                mt, t = parse_flags(cmd[1].arguments[0])
                 self.__raffle_manager.set_options(mt, t)
                 self.__raffle_manager.start()
             else:
@@ -188,6 +188,13 @@ class CommandManager(Thread):
             return
 
         #
+        # ---- Here begins poker commands
+        #
+
+        elif cmd[0] == "poker":
+            pass
+
+        #
         # ---- CAREFUL! THIS CLOSES THE BOT! ----
         #
         elif cmd[0] == "killbot":
@@ -223,21 +230,3 @@ class CommandManager(Thread):
         url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
         headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
         return requests.get(url, headers=headers).json()
-
-    @staticmethod
-    def parse_flags(s):
-        """
-        Parses the flags for the raffle timer and the max number of tickets
-        viewers are allowed to enter with.
-
-        :param s:
-        :return:
-        """
-        mt = t = 0
-        m = re.match(r'(\S+) (-m )*(?P<max_tick>\d+)*( )*(-t )*(?P<time>\d+)*', s)
-        m.groupdict()
-        if m['max_tick']:
-            mt = m['max_tick']
-        if m['time']:
-            t = m['time']
-        return mt, t
