@@ -10,6 +10,9 @@ from threading import Thread
 
 
 # Name 5 card draw in case I find a way to implement more types of poker
+from ch4tty import cktools
+
+
 class FiveCardDraw(Thread):
     """
     Handles the game of 5 card draw in poker. Will need a hierarchy of winning
@@ -21,9 +24,17 @@ class FiveCardDraw(Thread):
         self.bot = bot
 
         self.__is_game_running = False
-        self.__gamers = {}  # This will hold viewers and their gambled tickets.
-        self.__hands = {}  # This holds viewer and their current hand?
+
+        # Key: 'viewer name', Value: dictionary {}
+        # List Positions:
+        # One - Tickets bet
+        # Two - Their hand
+        # Three - Boolean for redraw
+        # Four - Boolean for second bet placed
+        self.__players = {}
+
         self.__deck = []  # This holds the deck of cards?
+        self.reset_the_deck()
 
     def deal_the_cards(self):
         pass
@@ -53,11 +64,15 @@ class FiveCardDraw(Thread):
         :return:
         """
         if self.__is_game_running:
-            if len(self.__gamers) == 5:
-                self.__gamers[viewer] = bet
+            if len(self.__players) < cktools.MAX_NUMBER_5_CARD_PLAYERS:
+                self.__players[viewer] = {'bet': bet, 'hand': '', 'are_tossed': False, 'is_2nd_made': False}
             else:
                 self.bot.send_message("The game is full.")
             pass
 
     def run(self):
+        self.__is_game_running = True
         pass
+
+    def is_running(self):
+        return self.__is_game_running

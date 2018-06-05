@@ -11,7 +11,8 @@ import time
 import requests
 from threading import Thread
 
-from ch4tty import parse_flags
+from ch4tty import parse_flags, cktools
+from ckg4mes import ckpoker
 from k4thy import rafflemngr
 
 
@@ -33,6 +34,7 @@ class CommandManager(Thread):
 
         # Private attributes
         self.__raffle_manager = rafflemngr.RaffleMngr(bot, bucket)
+        self.__ckfivecard = ckpoker.FiveCardDraw(bot)
         self.__command_queue = []
 
     def enqueue(self, cmd, e):
@@ -169,30 +171,34 @@ class CommandManager(Thread):
         elif cmd[0] == "ticket":
             args = cmd[1].arguments[0].split(' ')
             user_total_tickets = self.bucket.get_points(cmd[1].source.nick)
-            try:
-                t = int(args[1])
-            except ValueError:
-                self.bot.send_message("To enter a drawing, you must enter with\
-                                      a whole number of tickets.",
+
+            if not cktools.is_integer(args[1]):
+                self.bot.send_message("To enter a drawing, you must enter with a whole number of tickets.",
                                       True, cmd[1].source.nick)
                 return
-            if t > user_total_tickets:
-                self.bot.send_message("You don't have that many tickets to submit. Your \
-                                       total tickets are " + str(user_total_tickets),
+
+            if cktools.out_of_range(0, user_total_tickets, args[1]):
+                self.bot.send_message("In order to enter raffle, you must enter with a number\
+                                       of tickets greater than 0 and less than " + str(user_total_tickets),
                                       True, cmd[1].source.nick)
-            elif t < 0:
-                self.bot.send_message("Don't be an idiot trying to submit less than \
-                                      0 tickets", True, cmd[1].source.nick)
             else:
-                self.__raffle_manager.submit_tickets(cmd[1].source.nick, t)
+                self.__raffle_manager.submit_tickets(cmd[1].source.nick, args[1])
             return
 
         #
         # ---- Here begins poker commands
         #
-
+        # TODO: Figure out how to have initiate a game with the same command as joining an existing game.
         elif cmd[0] == "poker":
-            pass
+            args = cmd[1].arguments[0].split(' ')
+            if not cktools.is_poker_on_cooldown:
+                if not self.__ckfivecard.is_running():
+                    self.__ckfivecard.start()
+                viewer = cmd[1].source.nick
+                p = self.bucket.get_points(viewer)
+                self.__ckfivecard.join_the_game(viewer, p)
+            else:
+                self.bot.send_message("Five Card Draw is on cooldown. Try again later.")
 
         #
         # ---- CAREFUL! THIS CLOSES THE BOT! ----

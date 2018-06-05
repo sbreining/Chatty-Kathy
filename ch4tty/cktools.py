@@ -3,6 +3,10 @@ This will hold the tools and utilities of timers and parsers.
 """
 import re
 
+is_poker_on_cooldown = False
+
+MAX_NUMBER_5_CARD_PLAYERS = 5
+
 
 def parse_flags(s):
     """
@@ -20,3 +24,23 @@ def parse_flags(s):
     if m['time']:
         t = m['time']
     return mt, t
+
+
+def start_timer():
+    pass
+
+
+def end_timer():
+    pass
+
+
+# TODO: Figure out the number zero. Returning it is true, but will eval false.
+def is_integer(n):
+    try:
+        return int(n)
+    except ValueError:
+        return False
+
+
+def out_of_range(min_, max_, val):
+    return min_ <= val <= max_
