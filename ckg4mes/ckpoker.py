@@ -6,11 +6,11 @@ lose and gain points based who wins the pot. There is potential for split pots
 if two or more players have equal hands.
 """
 
-from threading import Thread
-
 
 # Name 5 card draw in case I find a way to implement more types of poker
+import random
 from ch4tty import cktools
+from threading import Thread
 
 
 class FiveCardDraw(Thread):
@@ -23,8 +23,6 @@ class FiveCardDraw(Thread):
 
         self.bot = bot
 
-        self.__is_game_running = False
-
         # Key: 'viewer name', Value: dictionary {}
         # List Positions:
         # One - Tickets bet
@@ -33,13 +31,14 @@ class FiveCardDraw(Thread):
         # Four - Boolean for second bet placed
         self.__players = {}
 
-        self.__deck = []  # This holds the deck of cards?
-        self.reset_the_deck()
+        self.__is_game_running = False
+        self.__player_1 = self.__player_2 = self.__player_3 = ''
+        self.__player_4 = self.__player_5 = ''
 
-    def deal_the_cards(self):
-        pass
+        self.__deck = []  # This holds the deck of cards.
+        self.__reset_the_deck()
 
-    def reset_the_deck(self):
+    def __reset_the_deck(self):
         # Is this how I want to hold the deck of cards?
         self.__deck = [
             '1S', '2S', '3S', '4S', '5S', '6S', '7S', '8S', '9S', '10S', '11S', '12S',
@@ -48,10 +47,34 @@ class FiveCardDraw(Thread):
             '1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D', '10D', '11D', '12D'
                       ]
 
-    def second_deal(self):
-        pass
+    def __reset_game(self):
+        # Reset the players hands
+        self.__player_1 = self.__player_2 = self.__player_3 = ''
+        self.__player_4 = self.__player_5 = ''
+        self.__reset_the_deck()
 
     def determine_winner(self):
+        pass
+
+    def deal_the_cards(self):
+        """
+        Step 1: Remove random card from the deck and put it in first players hand.
+        Step 2: Remove second random card and give it to the next player.
+        Step 3: Repeat until max players each have one card.
+        Step 4: Repeat those steps until each player has 5 cards.
+        :return:
+        """
+        while len(self.__players[self.__player_1]['hand']) < cktools.MAX_HAND_SIZE_5_CARD:
+            for viewer in self.__players:
+                pseudo_shuffled_card = random.choice(self.__deck)
+                viewer['hand'].append(pseudo_shuffled_card)
+
+    def second_deal(self):
+        """
+        Step 1: Deal off the top 5 cards minus the first players tossed cards.
+        Step 2: Repeat until all players hands are filled again.
+        :return:
+        """
         pass
 
     def join_the_game(self, viewer, bet):
@@ -65,14 +88,29 @@ class FiveCardDraw(Thread):
         """
         if self.__is_game_running:
             if len(self.__players) < cktools.MAX_NUMBER_5_CARD_PLAYERS:
-                self.__players[viewer] = {'bet': bet, 'hand': '', 'are_tossed': False, 'is_2nd_made': False}
+                self.__players[viewer] = {'bet': bet, 'hand': [], 'are_tossed': False, 'is_2nd_made': False}
+                if self.__player_1 == '':
+                    self.__player_1 = viewer
+                elif self.__player_2 == '':
+                    self.__player_2 = viewer
+                elif self.__player_3 == '':
+                    self.__player_3 = viewer
+                elif self.__player_4 == '':
+                    self.__player_4 = viewer
+                elif self.__player_5 == '':
+                    self.__player_5 = viewer
             else:
                 self.bot.send_message("The game is full.")
             pass
 
     def run(self):
         self.__is_game_running = True
+        while True:
+            if cktools.MAX_NUMBER_5_CARD_PLAYERS == len(self.__players):
+                break
         pass
 
     def is_running(self):
         return self.__is_game_running
+
+# TODO: Consider max bets per individual. Splitting the pot off if they have the best hand.

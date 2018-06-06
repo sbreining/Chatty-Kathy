@@ -6,6 +6,7 @@ import re
 is_poker_on_cooldown = False
 
 MAX_NUMBER_5_CARD_PLAYERS = 5
+MAX_HAND_SIZE_5_CARD = 5
 
 
 def parse_flags(s):
