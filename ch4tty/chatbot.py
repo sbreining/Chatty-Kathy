@@ -76,4 +76,4 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
     #
 
     def __do_command(self, e, cmd):
-        self.cmdmgr.enqueue(cmd, e)
+        self.cmdmgr.enqueue(e, cmd)

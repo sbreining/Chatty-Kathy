@@ -6,7 +6,6 @@ A user issues the command, the command is sent here to be queued up.
 And the queue pops the commands one at a time and fully executes it before going
 to the next item in the queue.
 """
-import sys
 import time
 import requests
 from threading import Thread
@@ -37,13 +36,13 @@ class CommandManager(Thread):
         self.__ckfivecard = ckpoker.FiveCardDraw(bot)
         self.__command_queue = []
 
-    def enqueue(self, cmd, e):
+    def enqueue(self, e, cmd):
         """
         enqueue pushes the command into the command queue for the thread to pop
         one command at a time.
 
-        :param cmd:
         :param e:
+        :param cmd:
         :return:
         """
         self.__command_queue.append([cmd, e])
@@ -171,15 +170,12 @@ class CommandManager(Thread):
         elif cmd[0] == "ticket":
             args = cmd[1].arguments[0].split(' ')
             user_total_tickets = self.bucket.get_points(cmd[1].source.nick)
+            max_tickets = self.__raffle_manager.get_max_tickets()
+            if user_total_tickets < max_tickets:
+                max_tickets = user_total_tickets
 
-            if not cktools.is_integer(args[1]):
-                self.bot.send_message("To enter a drawing, you must enter with a whole number of tickets.",
-                                      True, cmd[1].source.nick)
-                return
-
-            if cktools.out_of_range(0, user_total_tickets, args[1]):
-                self.bot.send_message("In order to enter raffle, you must enter with a number\
-                                       of tickets greater than 0 and less than " + str(user_total_tickets),
+            if not cktools.is_integer(args[1]) or cktools.out_of_range(0, max_tickets, args[1]):
+                self.bot.send_message("To enter a drawing, you must enter with a valid number of tickets.",
                                       True, cmd[1].source.nick)
             else:
                 self.__raffle_manager.submit_tickets(cmd[1].source.nick, args[1])
@@ -195,19 +191,10 @@ class CommandManager(Thread):
                 if not self.__ckfivecard.is_running():
                     self.__ckfivecard.start()
                 viewer = cmd[1].source.nick
-                p = self.bucket.get_points(viewer)
-                self.__ckfivecard.join_the_game(viewer, p)
+                # TODO Add input validation to args[1]
+                self.__ckfivecard.join_the_game(viewer, args[1])
             else:
                 self.bot.send_message("Five Card Draw is on cooldown. Try again later.")
-
-        #
-        # ---- CAREFUL! THIS CLOSES THE BOT! ----
-        #
-        elif cmd[0] == "killbot":
-            if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
-                sys.exit("The bot was killed by the steamer.")
-            else:
-                return
 
         #
         # ------------ The command was not recognized

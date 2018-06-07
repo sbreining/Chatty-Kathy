@@ -68,15 +68,10 @@ class RaffleMngr(Thread):
         :return:
         """
         if self.__open:
-            if tickets > self.__max_tickets:
-                self.__bot.send_message("You have tried to submit too many tickets, \
-                                       please submit at most " + str(self.__max_tickets),
-                                        True, viewer)
+            if viewer in self.__entered_users:
+                self.__entered_users[viewer] = tickets
             else:
-                if viewer in self.__entered_users:
-                    self.__entered_users[viewer] = tickets
-                else:
-                    self.__entered_users[viewer].append(tickets)
+                self.__entered_users[viewer].append(tickets)
         else:
             self.__bot.send_message("There is no raffle open right now")
 
@@ -180,3 +175,11 @@ class RaffleMngr(Thread):
         :return:
         """
         self.__is_winner_present = True
+
+    def get_max_tickets(self):
+        """
+        Returns the maximum allowed tickets for entry into the raffle.
+
+        :return:
+        """
+        return self.__max_tickets

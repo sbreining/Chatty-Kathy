@@ -35,10 +35,10 @@ def end_timer():
     pass
 
 
-# TODO: Figure out the number zero. Returning it is true, but will eval false.
 def is_integer(n):
     try:
-        return int(n)
+        int(n)
+        return True
     except ValueError:
         return False
 
