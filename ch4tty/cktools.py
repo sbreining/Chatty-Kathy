@@ -1,7 +1,11 @@
 """
 This will hold the tools and utilities of timers and parsers.
 """
+import os
 import re
+
+DIR_ = os.path.dirname(__file__)
+DB_PATH = os.path.join(DIR_, '../docs/kettlebase.db')
 
 
 def parse_flags(s):
