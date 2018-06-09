@@ -1,6 +1,7 @@
 import os
+import sys
 import unittest
-
+sys.path.append('../')
 from k4thy.dbcon import DatabaseConnection
 
 dir_ = os.path.dirname(__file__)
