@@ -38,7 +38,7 @@ def drop_commands(cursor, connection):
     connection.commit()
 
 
-class TestDataBaseCon(unittest.TestCase):
+class TestDatabaseConnection(unittest.TestCase):
     """
     Test the command and viewer-point database.
     """

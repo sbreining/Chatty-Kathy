@@ -24,3 +24,15 @@ def parse_flags(s):
     if m['time']:
         t = m['time']
     return mt, t
+
+
+def is_integer(n):
+    try:
+        int(n)
+        return True
+    except ValueError:
+        return False
+
+
+def out_of_range(min_, max_, val):
+    return min_ <= val <= max_

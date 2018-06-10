@@ -17,15 +17,17 @@ class RaffleMngr(Thread):
         self.__entered_users = {}
         self.__time_limit = 0
         self.__max_tickets = 0
-        self.__bot = b
-        self.__open = False
-        self.__bucket = bins
-        self.__is_closed_manually = False
-        self.__is_thread_stopped = False
         self.__winner = ""
-        self.__is_winner_present = False
 
-    def set_options(self, m, t):
+        self.__bot = b
+        self.__bucket = bins
+
+        self.__is_open = False
+        self.__is_thread_stopped = False
+        self.__is_winner_present = False
+        self.__is_closed_manually = False
+
+    def set_options(self, m=0, t=0):
         """
         This function sets the raffle options where m is the max number of
         tickets a user can enter, and t is the time limit to enter (0 for manual
@@ -36,11 +38,11 @@ class RaffleMngr(Thread):
         :return:
         """
         self.__reset_raffle()
-        self.__max_tickets = int(m)
-        self.__time_limit = int(t) * 60
+        self.__max_tickets = int(m)      # Expected that it is integer in string form
+        self.__time_limit = int(t) * 60  # Also expected as integer in string form
 
     def run(self):
-        self.__open = True
+        self.__is_open = True
         self.__bot.send_message("THE RAFFLE IS NOW OPEN!")
         counter = 0
 
@@ -53,7 +55,7 @@ class RaffleMngr(Thread):
                 if self.__is_closed_manually:
                     break
             self.__bot.send_message("RAFFLE IS NOW CLOSED!")
-            self.__open = False
+            self.__is_open = False
             self.__is_thread_stopped = True
 
         self.__pick_first_winner()
@@ -67,18 +69,18 @@ class RaffleMngr(Thread):
         :param tickets:
         :return:
         """
-        if self.__open:
-            if tickets > self.__max_tickets:
+        if self.__is_open:
+            if tickets > self.__max_tickets != 0:
                 self.__bot.send_message("You have tried to submit too many tickets, \
                                        please submit at most " + str(self.__max_tickets),
                                         True, viewer)
+                return False
             else:
-                if viewer in self.__entered_users:
-                    self.__entered_users[viewer] = tickets
-                else:
-                    self.__entered_users[viewer].append(tickets)
+                self.__entered_users[viewer] = tickets
+            return True
         else:
             self.__bot.send_message("There is no raffle open right now")
+            return False
 
     def __pick_first_winner(self):
         """
@@ -180,3 +182,31 @@ class RaffleMngr(Thread):
         :return:
         """
         self.__is_winner_present = True
+
+    def get_max_tickets(self):
+        """
+        Returns the max number of tickets a viewer and enter with.
+
+        :return:
+        """
+        return self.__max_tickets
+
+    def get_raffle_duration(self):
+        """
+        Returns the duration of the raffle. NOT TIME REMAINING
+
+        :return:
+        """
+        return self.__time_limit
+
+    def get_viewers_submitted_tickets(self, name):
+        """
+        Returns the viewers current tickets entered into the drawing
+
+        :param name:
+        :return:
+        """
+        return self.__entered_users[name]
+
+    def __open_raffle__(self):
+        self.__is_open = True

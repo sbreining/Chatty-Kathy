@@ -6,12 +6,11 @@ A user issues the command, the command is sent here to be queued up.
 And the queue pops the commands one at a time and fully executes it before going
 to the next item in the queue.
 """
-import sys
 import time
 import requests
 from threading import Thread
 
-from ch4tty import parse_flags
+from ch4tty import parse_flags, cktools
 from k4thy import rafflemngr
 
 
@@ -144,6 +143,9 @@ class CommandManager(Thread):
         elif cmd[0] == "beginraf":
             if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
                 mt, t = parse_flags(cmd[1].arguments[0])
+                if not cktools.is_integer(mt) or not cktools.is_integer(t):
+                    self.bot.send_message("The raffle needs whole number values for the options")
+                    return
                 self.__raffle_manager.set_options(mt, t)
                 self.__raffle_manager.start()
             else:
@@ -193,15 +195,6 @@ class CommandManager(Thread):
 
         elif cmd[0] == "poker":
             pass
-
-        #
-        # ---- CAREFUL! THIS CLOSES THE BOT! ----
-        #
-        elif cmd[0] == "killbot":
-            if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
-                sys.exit("The bot was killed by the steamer.")
-            else:
-                return
 
         #
         # ------------ The command was not recognized
