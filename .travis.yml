@@ -2,5 +2,5 @@ language: python
 python:
   - "3.6"
 script:
-  - "./test/python ./test/testdbcon.py"
-  - "./test/python ./test/testrafflemngr.py"
+  - "python3 ./test/testdbcon.py"
+  - "python3 ./test/testrafflemngr.py"
