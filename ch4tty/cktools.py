@@ -3,10 +3,12 @@ This will hold the tools and utilities of timers and parsers.
 """
 import re
 
-is_poker_on_cooldown = False
+is_poker_off_cooldown = True
 
 MAX_NUMBER_5_CARD_PLAYERS = 5
 MAX_HAND_SIZE_5_CARD = 5
+SUM_MAX_BETS = 250
+ANTE = 50
 
 
 def parse_flags(s):

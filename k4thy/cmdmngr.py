@@ -184,17 +184,34 @@ class CommandManager(Thread):
         #
         # ---- Here begins poker commands
         #
-        # TODO: Figure out how to have initiate a game with the same command as joining an existing game.
         elif cmd[0] == "poker":
-            args = cmd[1].arguments[0].split(' ')
-            if not cktools.is_poker_on_cooldown:
+            if cktools.is_poker_off_cooldown:
                 if not self.__ckfivecard.is_running():
                     self.__ckfivecard.start()
+                    time.sleep(2)  # Sleep for 2 seconds to allow poker thread to start.
                 viewer = cmd[1].source.nick
-                # TODO Add input validation to args[1]
-                self.__ckfivecard.join_the_game(viewer, args[1])
+
+                # In order to play poker, you need minimum of of SUM_MAX_BETS
+                if self.bucket.get_points(viewer) < cktools.SUM_MAX_BETS:
+                    self.bot.send_message("Sorry, you don't have enough tickets"
+                                          " to join the poker game.",
+                                          whisper=True, target=viewer)
+
+                self.__ckfivecard.join_the_game(viewer, cktools.ANTE)
             else:
                 self.bot.send_message("Five Card Draw is on cooldown. Try again later.")
+
+        elif cmd[0] == "bet":
+            # TODO
+            # Make sure it is not more than 100 tickets.
+            # Make sure it is not less than 0 tickets.
+            # Send it to the prize pool.
+            pass
+
+        elif cmd[0] == "pass":
+            # TODO
+            # Move the turn to the next person.
+            pass
 
         #
         # ------------ The command was not recognized
