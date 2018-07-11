@@ -35,6 +35,7 @@ class FiveCardDraw(Thread):
         self.__reset_the_deck__()
 
     def determine_winner(self):
+        # TODO
         pass
 
     def deal_the_cards(self):
@@ -85,12 +86,20 @@ class FiveCardDraw(Thread):
                 self.bot.send_message("The game is full.")
             pass
 
+    def place_bet(self, viewer, bet):
+        if 0 == bet:
+            self.__pass_bet__(viewer)
+
+    def is_player_in_game(self, viewer):
+        return viewer in self.__players.keys()
+
     def run(self):
         self.__is_game_running = True
         while True:
             if cktools.MAX_NUMBER_5_CARD_PLAYERS == len(self.__players):
                 break
         self.__take_tickets__()
+        self.__run_game__()
         self.__reward_winner__()  # This should be the last thing called.
         pass
 
@@ -113,9 +122,25 @@ class FiveCardDraw(Thread):
         self.__reset_the_deck__()
 
     def __take_tickets__(self):
+        # TODO
         pass
 
     def __reward_winner__(self):
+        # TODO
+        pass
+
+    def __pass_bet__(self, viewer):
+        # TODO
+        pass
+
+    def __run_game__(self):
+        # TODO
+        """
+        This will control the flow of the game. Wait for certain players to bet
+        and only proceed with the second dealing of cards once appropriate, and
+        then further call for a winner to be picked and so on.
+        :return:
+        """
         pass
 
     # TODO: Need an order of betting around the table. Can't just let everyone bet at the same time.

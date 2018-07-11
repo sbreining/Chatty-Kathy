@@ -203,14 +203,19 @@ class CommandManager(Thread):
 
         elif cmd[0] == "bet":
             # TODO
-            # Make sure it is not more than 100 tickets.
-            # Make sure it is not less than 0 tickets.
-            # Send it to the prize pool.
-            pass
+            args = cmd[1].arguments[0].split(' ')
+            if self.__ckfivecard.is_player_in_game(cmd[1].source.nick):
+                if not cktools.is_integer(args[1]) or not cktools.out_of_range(0, cktools.MAX_BET, int(args[1])):
+                    self.bot.send_message("Please bet 1 - 100 tickets as a whole number, or !bet 0 to pass",
+                                          whisper=True, target=cmd[1].source.nick)
+                else:
+                    self.__ckfivecard.place_bet(cmd[1].source.nick, args[1])
+            else:
+                self.bot.send_message("You are not part of this poker game ",
+                                      whisper=True, target=cmd[1].source.nick)
 
-        elif cmd[0] == "pass":
+        elif cmd[0] == "call":
             # TODO
-            # Move the turn to the next person.
             pass
 
         #

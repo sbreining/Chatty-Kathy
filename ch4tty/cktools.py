@@ -8,6 +8,7 @@ is_poker_off_cooldown = True
 MAX_NUMBER_5_CARD_PLAYERS = 5
 MAX_HAND_SIZE_5_CARD = 5
 SUM_MAX_BETS = 250
+MAX_BET = 100
 ANTE = 50
 
 
