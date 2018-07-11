@@ -72,8 +72,7 @@ class RaffleMngr(Thread):
         if self.__is_open:
             if tickets > self.__max_tickets != 0:
                 self.__bot.send_message("You have tried to submit too many tickets, \
-                                       please submit at most " + str(self.__max_tickets),
-                                        True, viewer)
+                                       please submit at most " + str(self.__max_tickets), viewer)
                 return False
             else:
                 self.__entered_users[viewer] = tickets

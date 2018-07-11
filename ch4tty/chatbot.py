@@ -66,8 +66,8 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             self.__do_command(e, cmd)
         return
 
-    def send_message(self, string, whisper=False, target=''):
-        if whisper:
+    def send_message(self, string, target=''):
+        if target != '':
             self.connection.privmsg(self.channel, '/w ' + target + ' ' + string)
         else:
             self.connection.privmsg(self.channel, string)

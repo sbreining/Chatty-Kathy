@@ -87,7 +87,7 @@ class CommandManager(Thread):
 
         elif cmd[0] == "kernels":
             self.bot.send_message("You have " + str(self.bucket.get_points(cmd[1].source.nick))
-                                  + " kernels", whisper=True, target=cmd[1].source.nick)
+                                  + " kernels", cmd[1].source.nick)
 
         #
         # ----- Here begins mod commands -----
@@ -175,16 +175,14 @@ class CommandManager(Thread):
                 t = int(args[1])
             except ValueError:
                 self.bot.send_message("To enter a drawing, you must enter with\
-                                      a whole number of tickets.",
-                                      True, cmd[1].source.nick)
+                                      a whole number of tickets.", cmd[1].source.nick)
                 return
             if t > user_total_tickets:
                 self.bot.send_message("You don't have that many tickets to submit. Your \
-                                       total tickets are " + str(user_total_tickets),
-                                      True, cmd[1].source.nick)
+                                       total tickets are " + str(user_total_tickets), cmd[1].source.nick)
             elif t < 0:
                 self.bot.send_message("Don't be an idiot trying to submit less than \
-                                      0 tickets", True, cmd[1].source.nick)
+                                      0 tickets", cmd[1].source.nick)
             else:
                 self.__raffle_manager.submit_tickets(cmd[1].source.nick, t)
             return
