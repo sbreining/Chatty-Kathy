@@ -10,8 +10,8 @@ import time
 import requests
 from threading import Thread
 
-from ch4tty import parse_flags, cktools
 from ckg4mes import ckpoker
+from ch4tty import parse_flags, cktools
 from k4thy import rafflemngr
 
 
@@ -89,7 +89,7 @@ class CommandManager(Thread):
 
         elif cmd[0] == "kernels":
             self.bot.send_message("You have " + str(self.bucket.get_points(cmd[1].source.nick))
-                                  + " kernels", whisper=True, target=cmd[1].source.nick)
+                                  + " kernels", cmd[1].source.nick)
 
         #
         # ----- Here begins mod commands -----
@@ -145,6 +145,9 @@ class CommandManager(Thread):
         elif cmd[0] == "beginraf":
             if cmd[1].tags[0]['value'][:-2] == 'broadcaster':
                 mt, t = parse_flags(cmd[1].arguments[0])
+                if not cktools.is_integer(mt) or not cktools.is_integer(t):
+                    self.bot.send_message("The raffle needs whole number values for the options")
+                    return
                 self.__raffle_manager.set_options(mt, t)
                 self.__raffle_manager.start()
             else:
@@ -170,15 +173,20 @@ class CommandManager(Thread):
         elif cmd[0] == "ticket":
             args = cmd[1].arguments[0].split(' ')
             user_total_tickets = self.bucket.get_points(cmd[1].source.nick)
-            max_tickets = self.__raffle_manager.get_max_tickets()
-            if user_total_tickets < max_tickets:
-                max_tickets = user_total_tickets
-
-            if not cktools.is_integer(args[1]) or cktools.out_of_range(0, max_tickets, args[1]):
-                self.bot.send_message("To enter a drawing, you must enter with a valid number of tickets.",
-                                      True, cmd[1].source.nick)
+            try:
+                t = int(args[1])
+            except ValueError:
+                self.bot.send_message("To enter a drawing, you must enter with\
+                                      a whole number of tickets.", cmd[1].source.nick)
+                return
+            if t > user_total_tickets:
+                self.bot.send_message("You don't have that many tickets to submit. Your \
+                                       total tickets are " + str(user_total_tickets), cmd[1].source.nick)
+            elif t < 0:
+                self.bot.send_message("Don't be an idiot trying to submit less than \
+                                      0 tickets", cmd[1].source.nick)
             else:
-                self.__raffle_manager.submit_tickets(cmd[1].source.nick, args[1])
+                self.__raffle_manager.submit_tickets(cmd[1].source.nick, t)
             return
 
         #

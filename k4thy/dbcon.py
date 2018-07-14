@@ -3,7 +3,6 @@ This will handle the connection to the database
 I will use sqlite. And so far it will hold viewers
 and their loyalty point values.
 """
-import os
 import sqlite3
 
 
@@ -12,12 +11,8 @@ class DatabaseConnection:
     This class handles the Database connection. It directly modifies the tables
     involved with the program.
     """
-    def __init__(self):
-        d = os.path.dirname(__file__)
-        docs_path = os.path.join(d, '../docs/')
-
-        self.db = sqlite3.connect(docs_path + "kettlebase.db",
-                                  check_same_thread=False)
+    def __init__(self, db_path):
+        self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.cur = self.db.cursor()
 
     def add_new_viewer(self, name):
@@ -31,7 +26,7 @@ class DatabaseConnection:
         n = name.lower()  # Make sure the name passed in is all lowercase.
         try:
             with self.db:
-                self.db.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 1,))
+                self.cur.execute("INSERT INTO viewers(name, points) VALUES (?, ?)", (n, 1,))
         except sqlite3.IntegrityError:
             return False
         return True
@@ -155,9 +150,17 @@ class DatabaseConnection:
         :return:
         """
         c = cmd.lower()
-        try:
-            with self.db:
-                self.db.execute("DELETE FROM textcommands WHERE command=?", (c,))
-        except sqlite3.IntegrityError:
+        if self.get_command_response(c) == "Not a valid command":
             return False
+        else:
+            self.db.execute("DELETE FROM textcommands WHERE command=?", (c,))
+
         return True
+
+    def __get_cursor_and_connection__(self):
+        """
+        Right now, purely for testing purposes.
+
+        :return:
+        """
+        return self.cur, self.db

@@ -11,6 +11,7 @@ limitations under the License.
 import irc.bot
 import requests
 
+from ch4tty import cktools
 from k4thy import dbcon
 from k4thy import viewermngr
 from k4thy import cmdmngr
@@ -40,7 +41,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         print('Connecting to ' + server + ' on port ' + str(port) + '...')
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, 'oauth:' + token)], username, username)
 
-        self.bucket = dbcon.DatabaseConnection()
+        self.bucket = dbcon.DatabaseConnection(cktools.DB_PATH)
 
         self.cmdmgr = cmdmngr.CommandManager(self, self.channel_id, self.client_id,
                                              self.bucket, self.lock)
@@ -65,8 +66,8 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             self.__do_command(e, cmd)
         return
 
-    def send_message(self, string, whisper=False, target=''):
-        if whisper:
+    def send_message(self, string, target=''):
+        if target != '':
             self.connection.privmsg(self.channel, '/w ' + target + ' ' + string)
         else:
             self.connection.privmsg(self.channel, string)
