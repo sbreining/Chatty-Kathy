@@ -3,9 +3,13 @@ This will hold the tools and utilities of timers and parsers.
 """
 import os
 import re
+import time
 
+#
+# ----- Poker related values
+#
 is_poker_off_cooldown = True
-
+POKER_COOLDOWN_TIME = 900
 MAX_NUMBER_5_CARD_PLAYERS = 5
 MAX_HAND_SIZE_5_CARD = 5
 SUM_MAX_BETS = 250
@@ -35,11 +39,11 @@ def parse_flags(s):
 
 
 def start_timer():
-    pass
+    return time.time()
 
 
-def end_timer():
-    pass
+def check_timer(start_time):
+    return time.time() - start_time
 
 
 def is_integer(n):
@@ -50,7 +54,7 @@ def is_integer(n):
         return False
 
 
-def out_of_range(min_, max_, val):
+def in_range(min_, max_, val):
     return min_ <= val <= max_
 
 

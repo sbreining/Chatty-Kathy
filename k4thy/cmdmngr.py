@@ -33,7 +33,7 @@ class CommandManager(Thread):
 
         # Private attributes
         self.__raffle_manager = rafflemngr.RaffleMngr(bot, bucket)
-        self.__ckfivecard = ckpoker.FiveCardDraw(bot)
+        self.__ckfivecard__ = ckpoker.FiveCardDraw(bot)
         self.__command_queue = []
 
     def enqueue(self, e, cmd):
@@ -193,31 +193,42 @@ class CommandManager(Thread):
         # ---- Here begins poker commands
         #
         elif cmd[0] == "poker":
+
+            if cktools.check_timer(self.__ckfivecard__.get_cooldown_start()) > cktools.POKER_COOLDOWN_TIME:
+                cktools.is_poker_off_cooldown = True
+
             if cktools.is_poker_off_cooldown:
-                if not self.__ckfivecard.is_running():
-                    self.__ckfivecard.start()
-                    time.sleep(2)  # Sleep for 2 seconds to allow poker thread to start.
                 viewer = cmd[1].source.nick
+                viewer_points = self.bucket.get_points(viewer)
+                if not self.__ckfivecard__.is_running():
+                    if viewer_points > cktools.SUM_MAX_BETS:
+                        self.__ckfivecard__.start()
+                        time.sleep(2)  # Sleep for 2 seconds to allow poker thread to start.
+                    else:
+                        self.bot.send_message(cmd[1].source.nick + " does not have enough"
+                                              " tickets to start a poker game. The minimum needed"
+                                              " is " + cktools.SUM_MAX_BETS)
+                        return
 
                 # In order to play poker, you need minimum of of SUM_MAX_BETS
-                if self.bucket.get_points(viewer) < cktools.SUM_MAX_BETS:
+                if viewer_points < cktools.SUM_MAX_BETS:
                     self.bot.send_message("Sorry, you don't have enough tickets"
                                           " to join the poker game.",
                                           whisper=True, target=viewer)
 
-                self.__ckfivecard.join_the_game(viewer, cktools.ANTE)
+                self.__ckfivecard__.join_the_game(viewer, cktools.ANTE)
             else:
                 self.bot.send_message("Five Card Draw is on cooldown. Try again later.")
 
         elif cmd[0] == "bet":
             # TODO
             args = cmd[1].arguments[0].split(' ')
-            if self.__ckfivecard.is_player_in_game(cmd[1].source.nick):
-                if not cktools.is_integer(args[1]) or not cktools.out_of_range(0, cktools.MAX_BET, int(args[1])):
+            if self.__ckfivecard__.is_player_in_game(cmd[1].source.nick):
+                if not cktools.is_integer(args[1]) or not cktools.in_range(0, cktools.MAX_BET, int(args[1])):
                     self.bot.send_message("Please bet 1 - 100 tickets as a whole number, or !bet 0 to pass",
                                           whisper=True, target=cmd[1].source.nick)
                 else:
-                    self.__ckfivecard.place_bet(cmd[1].source.nick, args[1])
+                    self.__ckfivecard__.place_bet(cmd[1].source.nick, args[1])
             else:
                 self.bot.send_message("You are not part of this poker game ",
                                       whisper=True, target=cmd[1].source.nick)
