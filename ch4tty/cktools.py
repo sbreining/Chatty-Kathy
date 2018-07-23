@@ -42,8 +42,8 @@ def start_timer():
     return time.time()
 
 
-def check_timer(start_time):
-    return time.time() - start_time
+def check_timer(the_past):
+    return time.time() - the_past
 
 
 def is_integer(n):
@@ -54,16 +54,8 @@ def is_integer(n):
         return False
 
 
-def in_range(min_, max_, val):
+def in_range_inclusive(min_, max_, val):
     return min_ <= val <= max_
-
-
-def is_integer(n):
-    try:
-        int(n)
-        return True
-    except ValueError:
-        return False
 
 
 def out_of_range(min_, max_, val):

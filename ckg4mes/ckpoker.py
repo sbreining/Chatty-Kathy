@@ -19,19 +19,22 @@ class FiveCardDraw(Thread):
     Handles the game of 5 card draw in poker. Will need a hierarchy of winning
     hands.
     """
-    def __init__(self, bot):
+    def __init__(self, bot, bucket):
         super().__init__()
 
         self.bot = bot
+        self.bucket = bucket
 
         # Key: 'viewer name', Value: dictionary {}
-        self.__players = {}
+        self.__players__ = {}
 
         self.__is_game_running__ = False
-        self.__player_1 = self.__player_2 = self.__player_3 = ''
-        self.__player_4 = self.__player_5 = ''
+        self.__player_1__ = self.__player_2__ = self.__player_3__ = ''
+        self.__player_4__ = self.__player_5__ = ''
 
         self.__deck__ = []  # This holds the deck of cards.
+        self.__current_bet__ = 0
+
         self.__cooldown_count__ = 0
 
     def determine_winner(self):
@@ -46,10 +49,9 @@ class FiveCardDraw(Thread):
         Step 4: Repeat those steps until each player has 5 cards.
         :return:
         """
-        while len(self.__players[self.__player_1]['hand']) < cktools.MAX_HAND_SIZE_5_CARD:
-            for viewer in self.__players:
-                pseudo_shuffled_card = random.choice(self.__deck__)
-                viewer['hand'].append(pseudo_shuffled_card)
+        while len(self.__players__[self.__player_1__]['hand']) < cktools.MAX_HAND_SIZE_5_CARD:
+            for player in self.__players__:
+                player['hand'].append(self.__deck__.pop())
 
     def second_deal(self):
         """
@@ -60,38 +62,43 @@ class FiveCardDraw(Thread):
         # TODO
         pass
 
-    def join_the_game(self, viewer, bet):
+    def join_the_game(self, viewer):
         """
         Have the viewers enter the game. This will check to see if the game
         is full or not.
 
         :param viewer:
-        :param bet:
         :return:
         """
         if self.__is_game_running__:
-            if len(self.__players) < cktools.MAX_NUMBER_5_CARD_PLAYERS:
-                self.__players[viewer] = {'bet': bet, 'hand': [], 'are_tossed': False, 'is_2nd_made': False}
-                if self.__player_1 == '':
-                    self.__player_1 = viewer
-                elif self.__player_2 == '':
-                    self.__player_2 = viewer
-                elif self.__player_3 == '':
-                    self.__player_3 = viewer
-                elif self.__player_4 == '':
-                    self.__player_4 = viewer
-                elif self.__player_5 == '':
-                    self.__player_5 = viewer
+            if len(self.__players__) < cktools.MAX_NUMBER_5_CARD_PLAYERS:
+                self.__players__[viewer] = {
+                    'name': viewer,
+                    'bet': cktools.ANTE,
+                    'hand': [],
+                    'are_tossed': False,
+                    'is_2nd_made': False,
+                }
+                if self.__player_1__ == '':
+                    self.__player_1__ = viewer
+                elif self.__player_2__ == '':
+                    self.__player_2__ = viewer
+                elif self.__player_3__ == '':
+                    self.__player_3__ = viewer
+                elif self.__player_4__ == '':
+                    self.__player_4__ = viewer
+                elif self.__player_5__ == '':
+                    self.__player_5__ = viewer
             else:
                 self.bot.send_message("The game is full.")
-            pass
 
     def place_bet(self, viewer, bet):
-        if 0 == bet:
+        # There is more to this condition. There must be no existing bet.
+        if 0 == bet and self.__current_bet__ == 0:
             self.__pass_bet__(viewer)
 
     def is_player_in_game(self, viewer):
-        return viewer in self.__players.keys()
+        return viewer in self.__players__.keys()
 
     def run(self):
         self.__cooldown_count__ = 0
@@ -100,12 +107,11 @@ class FiveCardDraw(Thread):
         random.shuffle(self.__deck__)
 
         while True:
-            if cktools.MAX_NUMBER_5_CARD_PLAYERS == len(self.__players):
+            if cktools.MAX_NUMBER_5_CARD_PLAYERS == len(self.__players__):
                 break
 
         cktools.is_poker_off_cooldown = False
 
-        self.__take_tickets__()
         self.__run_game__()
 
     def is_running(self):
@@ -122,16 +128,20 @@ class FiveCardDraw(Thread):
 
     def __reset_game__(self):
         # Reset the players hands
-        self.__player_1 = self.__player_2 = self.__player_3 = ''
-        self.__player_4 = self.__player_5 = ''
+        self.__player_1__ = self.__player_2__ = self.__player_3__ = ''
+        self.__player_4__ = self.__player_5__ = ''
+        for player in self.__players__:
+            player['hand'].clear()
+        self.__current_bet__ = 0
         self.__reset_the_deck__()
 
-    def __take_tickets__(self):
-        # TODO
-        pass
-
     def __reward_winner__(self):
-        # TODO
+        prize_pool = 0
+        for player in self.__players__:
+            self.bucket.subtract_points(player['name'], player['bet'])
+            prize_pool += player['bet']
+        self.bucket.add_points(prize_pool)
+
         self.__reset_game__()
         self.__cooldown_count__ = cktools.start_timer()
 

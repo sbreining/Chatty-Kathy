@@ -33,7 +33,7 @@ class CommandManager(Thread):
 
         # Private attributes
         self.__raffle_manager = rafflemngr.RaffleMngr(bot, bucket)
-        self.__ckfivecard__ = ckpoker.FiveCardDraw(bot)
+        self.__ckfivecard__ = ckpoker.FiveCardDraw(bot, bucket)
         self.__command_queue = []
 
     def enqueue(self, e, cmd):
@@ -216,7 +216,7 @@ class CommandManager(Thread):
                                           " to join the poker game.",
                                           whisper=True, target=viewer)
 
-                self.__ckfivecard__.join_the_game(viewer, cktools.ANTE)
+                self.__ckfivecard__.join_the_game(viewer)
             else:
                 self.bot.send_message("Five Card Draw is on cooldown. Try again later.")
 
@@ -224,7 +224,7 @@ class CommandManager(Thread):
             # TODO
             args = cmd[1].arguments[0].split(' ')
             if self.__ckfivecard__.is_player_in_game(cmd[1].source.nick):
-                if not cktools.is_integer(args[1]) or not cktools.in_range(0, cktools.MAX_BET, int(args[1])):
+                if not cktools.is_integer(args[1]) or not cktools.in_range_inclusive(0, cktools.MAX_BET, int(args[1])):
                     self.bot.send_message("Please bet 1 - 100 tickets as a whole number, or !bet 0 to pass",
                                           whisper=True, target=cmd[1].source.nick)
                 else:
@@ -234,6 +234,10 @@ class CommandManager(Thread):
                                       whisper=True, target=cmd[1].source.nick)
 
         elif cmd[0] == "call":
+            # TODO
+            pass
+
+        elif cmd[0] == "tosscards":
             # TODO
             pass
 
