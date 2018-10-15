@@ -14,7 +14,17 @@ MAX_NUMBER_5_CARD_PLAYERS = 5
 MAX_HAND_SIZE_5_CARD = 5
 SUM_MAX_BETS = 250
 MAX_BET = 100
-ANTE = 50
+# Hands of poker
+ROYAL_FLUSH = 10
+STRAIGHT_FLUSH = 9
+FOUR_OF_A_KIND = 8
+FULL_HOUSE = 7
+FLUSH = 6
+STRAIGHT = 5
+THREE_OF_A_KIND = 4
+TWO_PAIR = 3
+PAIR = 2
+HIGH_CARD = 1
 
 DIR_ = os.path.dirname(__file__)
 DB_PATH = os.path.join(DIR_, '../docs/kettlebase.db')

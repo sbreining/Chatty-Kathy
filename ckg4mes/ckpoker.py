@@ -13,6 +13,8 @@ import random
 from ch4tty import cktools
 from threading import Thread
 
+from ckg4mes.ckpokerplayer import PokerPlayer
+
 
 class FiveCardDraw(Thread):
     """
@@ -25,20 +27,24 @@ class FiveCardDraw(Thread):
         self.bot = bot
         self.bucket = bucket
 
-        # Key: 'viewer name', Value: dictionary {}
-        self.__players__ = {}
+        self.__players__ = []  # Max number of players is 5.
+        self.__players_in_game__ = 0
+        self.__all_players_bet__ = False
 
         self.__is_game_running__ = False
-        self.__player_1__ = self.__player_2__ = self.__player_3__ = ''
-        self.__player_4__ = self.__player_5__ = ''
 
         self.__deck__ = []  # This holds the deck of cards.
-        self.__current_bet__ = 0
+        self.__current_pot__ = 0
 
         self.__cooldown_count__ = 0
 
     def determine_winner(self):
-        # TODO
+        winning_hand = self.__players__[0].get_player_hand()
+        for i in range(5):
+            winning_hand = self.compare_hands(
+                winning_hand,
+                self.__players__[i].get_player_hande()
+            )
         pass
 
     def deal_the_cards(self):
@@ -49,9 +55,9 @@ class FiveCardDraw(Thread):
         Step 4: Repeat those steps until each player has 5 cards.
         :return:
         """
-        while len(self.__players__[self.__player_1__]['hand']) < cktools.MAX_HAND_SIZE_5_CARD:
+        while len(self.__players__[0].get_hand_size()) < cktools.MAX_HAND_SIZE_5_CARD:
             for player in self.__players__:
-                player['hand'].append(self.__deck__.pop())
+                player.add_card_to_hand(self.__deck__.pop())
 
     def second_deal(self):
         """
@@ -72,33 +78,21 @@ class FiveCardDraw(Thread):
         """
         if self.__is_game_running__:
             if len(self.__players__) < cktools.MAX_NUMBER_5_CARD_PLAYERS:
-                self.__players__[viewer] = {
-                    'name': viewer,
-                    'bet': cktools.ANTE,
-                    'hand': [],
-                    'are_tossed': False,
-                    'is_2nd_made': False,
-                }
-                if self.__player_1__ == '':
-                    self.__player_1__ = viewer
-                elif self.__player_2__ == '':
-                    self.__player_2__ = viewer
-                elif self.__player_3__ == '':
-                    self.__player_3__ = viewer
-                elif self.__player_4__ == '':
-                    self.__player_4__ = viewer
-                elif self.__player_5__ == '':
-                    self.__player_5__ = viewer
+                self.__players__[self.__players_in_game__] = PokerPlayer(viewer)
+                self.__players_in_game__ += 1
             else:
                 self.bot.send_message("The game is full.")
 
     def place_bet(self, viewer, bet):
         # There is more to this condition. There must be no existing bet.
-        if 0 == bet and self.__current_bet__ == 0:
+        if 0 == bet and 0 == self.__current_pot__:
             self.__pass_bet__(viewer)
 
     def is_player_in_game(self, viewer):
-        return viewer in self.__players__.keys()
+        list_of_players = []
+        for player in self.__players__:
+            list_of_players.append(player.get_player_name())
+        return viewer in list_of_players
 
     def run(self):
         self.__cooldown_count__ = 0
@@ -120,27 +114,26 @@ class FiveCardDraw(Thread):
     def __reset_the_deck__(self):
         # Is this how I want to hold the deck of cards?
         self.__deck__ = [
-            '1S', '2S', '3S', '4S', '5S', '6S', '7S', '8S', '9S', '10S', '11S', '12S',
-            '1H', '2H', '3H', '4H', '5H', '6H', '7H', '8H', '9H', '10H', '11H', '12H',
-            '1C', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', '10C', '11C', '12C',
-            '1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D', '10D', '11D', '12D'
-                        ]
+            '1S', '2S', '3S', '4S', '5S', '6S', '7S', '8S', '9S', '10S', '11S', '12S', '13S',
+            '1H', '2H', '3H', '4H', '5H', '6H', '7H', '8H', '9H', '10H', '11H', '12H', '13H',
+            '1C', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', '10C', '11C', '12C', '13C',
+            '1D', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D', '10D', '11D', '12D', '13D'
+        ]
 
     def __reset_game__(self):
         # Reset the players hands
-        self.__player_1__ = self.__player_2__ = self.__player_3__ = ''
-        self.__player_4__ = self.__player_5__ = ''
-        for player in self.__players__:
-            player['hand'].clear()
-        self.__current_bet__ = 0
+        self.__players__ = []
+        self.__current_pot__ = 0
+        self.__players_in_game__ = 0
         self.__reset_the_deck__()
 
     def __reward_winner__(self):
         prize_pool = 0
         for player in self.__players__:
-            self.bucket.subtract_points(player['name'], player['bet'])
-            prize_pool += player['bet']
-        self.bucket.add_points(prize_pool)
+            bet = player.get_bet()
+            self.bucket.subtract_points(player.get_player_name(), bet)
+            prize_pool += bet
+        self.bucket.add_points(self.determine_winner(), prize_pool)
 
         self.__reset_game__()
         self.__cooldown_count__ = cktools.start_timer()
@@ -157,10 +150,25 @@ class FiveCardDraw(Thread):
         then further call for a winner to be picked and so on.
         :return:
         """
-
+        self.__first_round_betting__()
         self.__reward_winner__()  # The last thing to be called.
 
     def get_cooldown_start(self):
         return self.__cooldown_count__
+
+    def compare_hands(self, hand1, hand2):
+        if hand1 > hand2:
+            return hand1
+        return hand2
+
+    def __first_round_betting__(self):
+        # TODO Utilize recursion to make sure all players have bet
+        for player in self.__players__:
+            while True:
+                if player.get_has_bet():
+                    break
+
+        if not self.__all_players_bet__:
+            self.__first_round_betting__()
 
     # TODO: Need an order of betting around the table. Can't just let everyone bet at the same time.

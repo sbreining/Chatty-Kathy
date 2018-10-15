@@ -10,9 +10,9 @@ import time
 import requests
 from threading import Thread
 
-from ckg4mes import ckpoker
+from ckg4mes import FiveCardDraw
 from ch4tty import parse_flags, cktools
-from k4thy import rafflemngr
+from k4thy.rafflemngr import RaffleMngr
 
 
 class CommandManager(Thread):
@@ -32,8 +32,8 @@ class CommandManager(Thread):
         self.lock = lock
 
         # Private attributes
-        self.__raffle_manager = rafflemngr.RaffleMngr(bot, bucket)
-        self.__ckfivecard__ = ckpoker.FiveCardDraw(bot, bucket)
+        self.__raffle_manager = RaffleMngr(bot, bucket)
+        self.__ckfivecard__ = FiveCardDraw(bot, bucket)
         self.__command_queue = []
 
     def enqueue(self, e, cmd):
