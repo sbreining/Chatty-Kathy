@@ -146,33 +146,37 @@ class CommandManager(Thread):
         """
         url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
         headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+
         return requests.get(url, headers=headers).json()
 
     def __do_command_game__(self):
         r = self.__get_streamer_info__()
-        self.bot.send_message(r['display_name'] +
-                              ' is currently playing ' +
-                              r['game'])
+        name = r['display_name']
+        game = r['game']
+        self.bot.send_message(name + ' is currently playing ' + game)
 
     def __do_command_title__(self):
         r = self.__get_streamer_info__()
-        self.bot.send_message(r['display_name'] +
-                              ' channel title is currently ' +
-                              r['status'])
+        name = r['display_name']
+        status = r['status']
+        self.bot.send_message(name + ' channel title is currently ' + status)
 
     def __do_command_kernels__(self, chatter):
-        self.bot.send_message("You have " + str(self.bucket.get_points(chatter.source.nick))
-                              + " kernels", chatter.source.nick)
+        num = str(self.bucket.get_points(chatter.source.nick))
+        self.bot.send_message("You have " + num + " kernels", chatter.source.nick)
 
     def __do_command_addcom__(self, mod):
-        if mod.tags[0]['value'][:-2] != 'moderator' \
-                and mod.tags[0]['value'][:-2] != 'broadcaster':
+
+        role = mod.tags[0]['value'][:-2]
+        if role != 'moderator' and role != 'broadcaster':
             self.__no_permission__()
             return
+
         args = mod.arguments[0].split('\"')
         if len(args) != 3:
             self.bot.send_message("Incorrect use of addcom")
             return
+
         commands = args[0].split(' ')
         if self.bucket.add_command(commands[1], args[1]):
             self.bot.send_message("Command was added successfully")
@@ -180,28 +184,32 @@ class CommandManager(Thread):
             self.bot.send_message("Command was NOT added, could already exist")
 
     def __do_command_rmvcom__(self, mod):
-        if mod.tags[0]['value'][:-2] != 'moderator' \
-                and mod.tags[0]['value'][:-2] != 'broadcaster':
+        role = mod.tags[0]['value'][:-2]
+        if role != 'moderator' and role != 'broadcaster':
             self.__no_permission__()
             return
+
         args = mod.arguments[0].split(' ')
         if len(args) != 2:
             self.bot.send_message("Incorrect use of rmvcom")
             return
+
         if self.bucket.remove_command(args[1]):
             self.bot.send_message("Command was removed successfully")
         else:
             self.bot.send_message("Command was NOT removed, might not exist?")
 
     def __do_command_updatecom__(self, mod):
-        if mod.tags[0]['value'][:-2] != 'moderator' \
-                and mod.tags[0]['value'][:-2] != 'broadcaster':
+        role = mod.tags[0]['value'][:-2]
+        if role != 'moderator' and role != 'broadcaster':
             self.__no_permission__()
             return
+
         args = mod.arguments[0].split('\"')
         if len(args) != 3:
             self.bot.send_message("Incorrect use of updatecom")
             return
+
         commands = args[0].split(' ')
         if self.bucket.update_command(commands[1], args[1]):
             self.bot.send_message("Command was updated successfully")
@@ -214,6 +222,7 @@ class CommandManager(Thread):
             if not cktools.is_integer(mt) or not cktools.is_integer(t):
                 self.bot.send_message("The raffle needs whole number values for the options")
                 return
+
             self.__raffle_manager__.set_options(mt, t)
             self.__raffle_manager__.start()
         else:
@@ -243,15 +252,16 @@ class CommandManager(Thread):
         try:
             t = int(args[1])
         except ValueError:
-            self.bot.send_message("To enter a drawing, you must enter with\
-                                              a whole number of tickets.", viewer.source.nick)
+            message = "To enter a drawing, you must enter with a whole number of tickets."
+            self.bot.send_message(message, viewer.source.nick)
             return
+
         if t > user_total_tickets:
-            self.bot.send_message("You don't have that many tickets to submit. Your \
-                                               total tickets are " + str(user_total_tickets), viewer.source.nick)
+            message = "You don't have that many tickets to submit. Your total tickets are "
+            self.bot.send_message(message + str(user_total_tickets), viewer.source.nick)
         elif t < 0:
-            self.bot.send_message("Don't be an idiot trying to submit less than \
-                                              0 tickets", viewer.source.nick)
+            message = "Don't be an idiot trying to submit less than 0 tickets"
+            self.bot.send_message(message, viewer.source.nick)
         else:
             self.__raffle_manager__.submit_tickets(viewer.source.nick, t)
         return
